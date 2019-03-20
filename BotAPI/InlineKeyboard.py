@@ -1,3 +1,3 @@
 
-class BotInlineKeyboard:
+class InlineKeyboard:
     pass
