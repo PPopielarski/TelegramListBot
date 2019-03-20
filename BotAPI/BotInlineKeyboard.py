@@ -1,0 +1,3 @@
+
+class BotInlineKeyboard:
+    pass
