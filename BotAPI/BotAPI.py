@@ -3,33 +3,29 @@ import requests
 import urllib
 
 
-def send_get_request(url):
-    """url is request, returns json file with response"""
-    return json.loads(requests.get(url).content.decode("utf8"))
-
-
 class BotAPI:
 
     def __init__(self, token, last_update_id=-1):
-        self.token = token
+        self.url = 'https://api.telegram.org/bot' + token + '/'
         self.last_update_id = last_update_id
 
+    def send_post_request(self, parameters_dict):
+        """Sends request to bot and returns json file with response
+        Args: parameters_dict is a dictionary with parameters"""
+        return json.loads(requests.post(self.url, json=parameters_dict).content.decode("utf8"))
+
     def get_bot_details(self):
-        return send_get_request('https://api.telegram.org/bot'+self.token+'/getme')
+        return self.send_post_request({"method": "getme"})
 
     def get_updates(self, offset=True, timeout=100):
+        d = {"timeout": timeout, "method": "getUpdates"}
         if offset is True:
             if self.last_update_id > -1:
-                offset = '?offset=' + self.last_update_id
-            else:
-                offset = ''
-        elif offset is False:
-            offset = ''
-        else:
-            offset = '?offset=' + offset
+                d["offset"] = self.last_update_id
+        elif type(offset) == 'int':
+            d["offset"] = offset
 
-        result = send_get_request('https://api.telegram.org/bot' + self.token + '/getUpdates?timeout=' + timeout +
-                                  offset)
+        result = self.send_post_request(d)
 
         for update_id in result["result"]:
             if int(update_id) > self.last_update_id:
@@ -38,6 +34,6 @@ class BotAPI:
 
     def send_message(self, text, chat_id):
         text = urllib.parse.quote_plus(text)
-        send_get_request('https://api.telegram.org/bot' + self.token + '/sendMessage?text='+text+'&chat_id='+chat_id)
+        self.send_post_request({"method": "sendMessage", "text": text, "chat_id": chat_id})
 
 

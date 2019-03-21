@@ -35,3 +35,4 @@ class InlineKeyboard:
 
     def get_keyboard_string(self):
         return self.keyboard_string
+
