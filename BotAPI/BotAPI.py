@@ -24,9 +24,7 @@ class BotAPI:
                 d["offset"] = self.last_update_id
         elif type(offset) == 'int':
             d["offset"] = offset
-
         result = self.send_post_request(d)
-
         for update_id in result["result"]:
             if int(update_id) > self.last_update_id:
                 self.last_update_id = int(update_id)
@@ -35,5 +33,7 @@ class BotAPI:
     def send_message(self, text, chat_id):
         text = urllib.parse.quote_plus(text)
         self.send_post_request({"method": "sendMessage", "text": text, "chat_id": chat_id})
+
+
 
 
