@@ -1,7 +1,6 @@
 import json
 import requests
 import urllib
-from BotAPI import InlineKeyboard
 
 
 class Bot:
