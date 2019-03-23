@@ -1,9 +1,10 @@
 import json
 import requests
 import urllib
+from BotAPI import InlineKeyboard
 
 
-class BotAPI:
+class Bot:
 
     def __init__(self, token, last_update_id=-1):
         self.url = 'https://api.telegram.org/bot' + token + '/'
@@ -30,10 +31,7 @@ class BotAPI:
                 self.last_update_id = int(update_id)
         return result
 
-    def send_message(self, text, chat_id):
+    def send_message(self, text, chat_id, inline_markup=None):
         text = urllib.parse.quote_plus(text)
-        self.send_post_request({"method": "sendMessage", "text": text, "chat_id": chat_id})
-
-
-
-
+        self.send_post_request({"method": "sendMessage", "text": text, "chat_id": chat_id,
+                                "inline_markup": inline_markup})
