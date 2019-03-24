@@ -1,25 +1,32 @@
 import sys
-import json
 
 
 class InlineKeyboard:
 
-    def __init__(self, resize_keyboard=True, one_time_keyboard=False, json_data=None):
-        """Creates inline keyboard.
-        If json is set the keyboard will be mady out of json data and rest of arguments will be ignored."""
-        if json_data is not None:
-            self.resize_keyboard = json_data['resize_keyboard']
-            self.one_time_keyboard = json_data['one_time_keyboard']
+    @classmethod
+    def from_json(cls, json_data):
+        resize_keyboard = json_data['resize_keyboard'] if 'resize_keyboard' in json_data else False
+        one_time_keyboard = json_data['one_time_keyboard'] if 'one_time_keyboard' in json_data else False
+        selective = json_data['selective'] if 'selective' in json_data else False
+        if 'inline_keyboard' in json_data:
+            rows_dict = {}
             buttons_list_of_lists = json_data['inline_keyboard']
-            self.__rows_dict = {}
             for list_number in range(len(buttons_list_of_lists)):
-                self.__rows_dict[list_number] = {}
+                rows_dict[list_number] = {}
                 for button_number in range(len(buttons_list_of_lists[list_number])):
-                    self.__rows_dict[list_number][button_number] = buttons_list_of_lists[list_number][button_number]
-        else:
-            self.__rows_dict = {}
-            self.resize_keyboard = resize_keyboard
-            self.one_time_keyboard = one_time_keyboard
+                    rows_dict[list_number][button_number] = buttons_list_of_lists[list_number][button_number]
+        ik = cls(resize_keyboard, one_time_keyboard, selective)
+        ik.__rows_dict = rows_dict
+        return ik
+
+    def __init__(self, resize_keyboard=True, one_time_keyboard=False, selective=False):
+        self.__rows_dict = {}
+        self.resize_keyboard = resize_keyboard
+        self.selective = selective
+        self.one_time_keyboard = one_time_keyboard
+
+    def __str__(self):
+        return self.get_keyboard_markup()
 
     def add_button(self, text, callback_data, row=None, column=None, url=None):
         """Indexes of rows and columns can contain gaps (e.g. 1, 2, 4) and start from any value."""
@@ -44,7 +51,8 @@ class InlineKeyboard:
             else:
                 column = max(self.__rows_dict[row]) + 1
         if column in self.__rows_dict[row]:
-            raise Exception('Button in this position is already set. Use pop_button to remove it or change coordinates.')
+            raise Exception(
+                'Button in this position is already set. Use pop_button to remove it or change coordinates.')
 
         button = {"text": text, "callback_data": callback_data}
         if url:
@@ -91,6 +99,5 @@ class InlineKeyboard:
             for col_number in sorted(self.__rows_dict[row_number]):
                 buttons_list.append(self.__rows_dict[row_number][col_number])
             buttons_list_of_lists.append(buttons_list)
-
         return {'resize_keyboard': self.resize_keyboard, 'one_time_keyboard': self.one_time_keyboard,
-                'inline_keyboard': buttons_list_of_lists}
+                'selective': self.selective, 'inline_keyboard': buttons_list_of_lists}

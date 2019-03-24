@@ -1,15 +1,19 @@
-from BotAPI import InlineKeyboard
+from BotAPI import Bot
+from DatabaseHandlers import SQLiteHandler
+from ListBot import ChatHandler
+import time
 
-ik = InlineKeyboard.InlineKeyboard()
-ik.add_button("text", "cdm00")
-ik.add_button("text2", "cdm22")
-x = ik.get_keyboard_markup()
-ik2 = InlineKeyboard.InlineKeyboard(json_data = x)
-print(ik2.get_keyboard_markup())
-ik2.move_button(0,0,2,2)
 
-print(ik2.get_keyboard_markup())
+bot = Bot.Bot('783375470:AAHjxORsSMQRcL3T2RIQgFkQs6ZSt9vpemI')
+db = SQLiteHandler.SQLiteHandler()
+db.start()
+ChatHandler.ChatHandler.initialize_class(bot, db)
 
-ik2.move_button(2, 2, new_row=0, new_column=0)
 
-print(ik2.get_keyboard_markup())
+while True:
+    ChatHandler.ChatHandler.get_updates()
+    time.sleep(1)
+
+
+
+

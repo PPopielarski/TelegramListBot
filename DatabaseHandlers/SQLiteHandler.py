@@ -15,21 +15,21 @@ class SQLiteHandler:
         self.log = Logger(purge_database)
         self.start()
         self.c = self.conn.cursor()
-        self.create_tables(purge_database)
+        self.__create_tables(purge_database)
         self.c.close()
 
-    def create_tables(self, drop_if_exists=False):
+    def __create_tables(self, drop_if_exists=False):
         """Creates tables, if they already exist it drops them before."""
         try:
             existing_tables = self.c.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()
 
             if drop_if_exists:
-                self.c.execute('''drop table if exists user''')
+                self.c.execute('''drop table if exists chat''')
                 self.c.execute('''drop table if exists list''')
                 self.c.execute('''drop table if exists task''')
                 self.c.execute('''drop table if exists scheduled_task''')
 
-            self.c.execute('''CREATE TABLE IF NOT EXISTS user(chat_id INTEGER PRIMARY KEY, 
+            self.c.execute('''CREATE TABLE IF NOT EXISTS chat(chat_id INTEGER PRIMARY KEY, 
                               message_id integer not null)''')
             self.c.execute('''CREATE TABLE IF NOT EXISTS list(list_id INTEGER PRIMARY KEY AUTOINCREMENT, 
                          chat_id integer not null, list_name text not null)''')
@@ -37,6 +37,8 @@ class SQLiteHandler:
                                 not null, task_name text not null, deletion_time DATETIME DEFAULT NULL)''')
             self.c.execute('''CREATE TABLE IF NOT EXISTS scheduled_task(scheduled_task_id INTEGER PRIMARY KEY 
                             AUTOINCREMENT, list_id integer, start_time DATETIME, setting_json text)''')
+            self.c.execute('''CREATE TABLE IF NOT EXISTS configuration(name text not null, value text''')
+            self.c.execute("insert into configuration (name, value) values(?, ?)", ('GetUpdate_offset', None))
 
             if len(existing_tables) > 0:
                 self.log.enter_log("Tables creation.\nTables existing before operation (" + re.sub('[' +
@@ -68,33 +70,33 @@ class SQLiteHandler:
             self.log.enter_log("Error during connecting to database:\n" + str(er))
             return False
 
-    def add_user(self, chat_id, message_id, commit=False):
+    def add_chat(self, chat_id, message_id, commit=False):
         try:
-            self.c.execute("insert into user (chat_id, message_id) values(?, ?)", (chat_id, message_id))
+            self.c.execute("insert into chat (chat_id, message_id) values(?, ?)", (chat_id, message_id))
             if commit is True:
                 self.conn.commit()
         except sqlite3.Error as er:
             self.conn.rollback()
-            self.log.enter_log("Error during adding new user (chat_id = "+str(chat_id)+", message_id = "+str(message_id)
+            self.log.enter_log("Error during adding new chat (chat_id = "+str(chat_id)+", message_id = "+str(message_id)
                                + "):\n" + str(er))
 
-    def delete_user(self, chat_id, commit=False):
+    def delete_chat(self, chat_id, commit=False):
         try:
             self.c.execute("DELETE FROM task WHERE list_id IN (SELECT list_id FROM list WHERE chat_id = ?)", (chat_id,))
             self.c.execute("DELETE FROM list WHERE chat_id = ?", (chat_id,))
-            self.c.execute("DELETE FROM user WHERE chat_id = ?", (chat_id,))
+            self.c.execute("DELETE FROM chat WHERE chat_id = ?", (chat_id,))
             if commit is True:
                 self.conn.commit()
         except sqlite3.Error as er:
             self.conn.rollback()
-            self.log.enter_log("Error during deleting user (chat_id = " + str(chat_id) + "):\n" + str(er))
+            self.log.enter_log("Error during deleting chat (chat_id = " + str(chat_id) + "):\n" + str(er))
 
-    def check_user_existence(self, chat_id):
-        return True if self.c.execute("SELECT EXISTS (SELECT 1 FROM user WHERE chat_id = ? LIMIT 1)", chat_id) \
+    def check_chat_existence(self, chat_id):
+        return True if self.c.execute("SELECT EXISTS (SELECT 1 FROM chat WHERE chat_id = ? LIMIT 1)", chat_id) \
                                       .fetchone()[0] > 0 else False
 
     def add_list(self, chat_id, list_name, commit=False):
-        """Adds task list for specified user.
+        """Adds task list for specified chat.
         If there already are list with this name the function returns False and adds no list."""
         try:
             if int(self.c.execute("SELECT EXISTS (SELECT COUNT(1) FROM list WHERE chat_id = ? LIMIT 1)",
@@ -107,6 +109,33 @@ class SQLiteHandler:
             self.conn.rollback()
             self.log.enter_log("Error during adding new list (chat_id = "+str(chat_id)+", list_name ="+list_name+"):\n"
                                + str(er))
+
+    def select_from_list_tab(self, select_list_id=False, select_chat_id=False, select_list_name=False,
+                             where_list_id=None, where_chat_id=None, where_list_name=None):
+        """Performs select clause on list table. Selected data is specified by parameters."""
+        select = []
+        if select_list_id:
+            select.append('list.list_id')
+        if select_chat_id:
+            select.append('list.chat_id')
+        if select_list_name:
+            select.append('list.list_name')
+        if len(select) == 0:
+            raise Exception('No values in SELECT list.')
+        select = ', '.join(select)
+        where = []
+        if where_list_id:
+            where.append('list.list_id = ' + str(where_list_id))
+        if where_chat_id:
+            where.append('list.chat_id = ' + str(where_chat_id))
+        if where_list_name:
+            where.append('list.list_name = ' + str(where_list_name))
+        where = 'AND '.join(where)
+        try:
+            return self.c.execute("SELECT " + select + " FROM list WHERE " + where).fetchall()
+        except sqlite3.Error as er:
+            self.log.enter_log("Error during selecting lists (chat_id = " + str(chat_id) + "):\n" + str(er))
+            return None
 
     def add_task_by_list_id(self, task_name, list_id, deletion_time=None, commit=False):
         try:
@@ -130,19 +159,19 @@ class SQLiteHandler:
                                + ", list_name = " + list_name + ", deletion_time = " + str(deletion_time) + "):\n"
                                + str(er))
 
-    def update_user_message_id(self, chat_id, new_message_id, commit=False):
+    def update_chat_message_id(self, chat_id, new_message_id, commit=False):
         try:
-            self.c.execute("UPDATE user SET message_id = ? WHERE chat_id = ?", (new_message_id, chat_id))
+            self.c.execute("UPDATE chat SET message_id = ? WHERE chat_id = ?", (new_message_id, chat_id))
             if commit is True:
                 self.conn.commit()
         except sqlite3.Error as er:
             self.conn.rollback()
-            self.log.enter_log("Error during updating message_id in USER tab (chat_id = " + str(chat_id) +
+            self.log.enter_log("Error during updating message_id in chat tab (chat_id = " + str(chat_id) +
                                ", new_message_id =" + str(new_message_id) + "):\n" + str(er))
 
     def update_list_name(self, list_id, new_name, commit=False):
         """Update tasks name and returns True if the operation was successful.
-        Name of the list must be unique for one user."""
+        Name of the list must be unique for one chat."""
         try:
             if self.c.execute("""SELECT EXISTS (SELECT COUNT(1) FROM list WHERE list_name = ? and chat_id = 
             (SELECT chat_id FROM list WHERE list_id = ? LIMIT 1))""", (new_name, list_id)).fetchone()[0] > 0:
@@ -228,3 +257,17 @@ class SQLiteHandler:
             self.log.enter_log("Error during selecting tasks (" + str(lo.strip) + "):\n" + str(er))
             return False
         return sel
+
+    def set_get_update_offset_value(self, value):
+        try:
+            self.c.execute("UPDATE configuration SET value = ? WHERE name = 'GetUpdate_offset'", value)
+        except sqlite3.Error as er:
+            self.log.enter_log("Error during updating GetUpdate_offset:\n" + str(er))
+            return False
+
+    def get_get_update_offset_value(self):
+        try:
+            return self.c.execute("Select value FROM configuration WHERE name = 'GetUpdate_offset'").fetchall()[0]
+        except sqlite3.Error as er:
+            self.log.enter_log("Error during selecting GetUpdate_offset:\n" + str(er))
+            return None
