@@ -134,10 +134,10 @@ class SQLiteHandler:
         try:
             return self.c.execute("SELECT " + select + " FROM list WHERE " + where).fetchall()
         except sqlite3.Error as er:
-            self.log.enter_log("Error during selecting lists (chat_id = " + str(chat_id) + "):\n" + str(er))
+            self.log.enter_log("Error during selecting lists ( " + str(select) + ") where (" + where + "):\n" + str(er))
             return None
 
-    def add_task_by_list_id(self, task_name, list_id, deletion_time=None, commit=False):
+    def add_item_by_list_id(self, task_name, list_id, deletion_time=None, commit=False):
         try:
             self.c.execute("insert into task (list_id, task_name, deletion_time) values(?,?,?)",
                            (list_id, task_name, deletion_time))
@@ -148,9 +148,9 @@ class SQLiteHandler:
             self.log.enter_log("Error during adding new task (list_id = " + str(list_id) + ", task_name = " + task_name
                                + ", deletion_time = "+str(deletion_time) + "):\n" + str(er))
 
-    def add_task_by_chat_id_and_list_name(self, task_name, chat_id, list_name, deletion_time=None, commit=False):
+    def add_item_by_chat_id_and_list_name(self, task_name, chat_id, list_name, deletion_time=None, commit=False):
         try:
-            self.add_task_by_list_id(task_name, self.c.execute('''SELECT list.list_id FROM list WHERE list.chat_id 
+            self.add_item_by_list_id(task_name, self.c.execute('''SELECT list.list_id FROM list WHERE list.chat_id 
                                      = ? AND list.list_name = ? LIMIT 1''', (chat_id, list_name)).fetchone()[0],
                                      deletion_time, commit)
         except sqlite3.Error as er:
@@ -186,10 +186,10 @@ class SQLiteHandler:
                                ", new_name =" + new_name + "):\n" + str(er))
             return False
 
-    def update_task_name(self, task_id, new_name, commit=False):
+    def update_item_name(self, task_id, new_name, commit=False):
         """Update tasks name and returns True if the operation was successful."""
         try:
-            self.c.execute("UPDATE task SET task_name = ? WHERE list_id = ?", (new_name, task_id))
+            self.c.execute("UPDATE list_item SET list_item_name = ? WHERE list_id = ?", (new_name, task_id))
             if commit is True:
                 self.conn.commit()
             return True
