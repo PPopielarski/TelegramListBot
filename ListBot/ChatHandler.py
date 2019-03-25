@@ -1,4 +1,5 @@
 from BotAPI import InlineKeyboard
+import time
 
 
 class ChatHandler:
@@ -38,24 +39,34 @@ class ChatHandler:
             if chat_id in cls.chat_dict:
                 cls.chat_dict[chat_id].handle_update(result)
             else:
-                message_id = cls.bot.send_message("List Bot", chat_id)['result']['message_id']
-                cls.chat_dict[chat_id] = ChatHandler(chat_id, message_id)
-                cls.chat_dict[chat_id].show_list_of_lists()
+                message = cls.bot.send_message("List Bot", chat_id)['result']
+                cls.chat_dict[chat_id] = ChatHandler(chat_id, message['message_id'], message['date'])
 
-    def __init__(self, chat_id, message_id):
+    def __init__(self, chat_id, message_id, message_date):
         self.chat_id = chat_id
-        self.message_id = message_id
+        self.last_message_id = message_id
         self.state = 0
-        ChatHandler.chat_dict[chat_id] = self
+        self.last_message_date = message_date
+
+    def __respond(self, text, reply_markup=None, force_message=False):
+        # checks if more than two days passed since last bot message and if last_message_id is set.
+        # Last_message_is is none if last message was from user.
+        if force_message is False and self.last_message_id is not None \
+                and time.time() - self.last_message_date < 172800:
+            ChatHandler.bot.edit_message(text, self.chat_id, self.last_message_id, reply_markup)
+        else:
+            message = ChatHandler.bot.send_message(self, text, self.chat_id, reply_markup)
+            self.last_message_date = message['date']
+            self.last_message_id = message['message_id']
 
     def handle_update(self, update):
         if "message" in update:
+            self.last_message_id = None
             if 'entities' in update['message']:
                 if update['message']['entities']['type'] is "bot_command":
                     self.handle_command(update['message'])
             else:
                 self.handle_message(update['message'])
-            self.update_message(ChatHandler.bot.send_message("List Bot", self.chat_id)['result']['message_id'])
         elif 'callback_query' in update:
             self.handle_callback(update['callback_query'])
 
@@ -66,23 +77,20 @@ class ChatHandler:
         pass
 
     def handle_command(self, command):
-        if command['text'][:9] is '/add_list':
-            self.__add_list(command['text'][9:])
+        strip = command['text'].lstrip()
+        if strip[:9] is '/add_list':
+            strip = strip[9:].strip()
+            if len(strip) == 0:
+                self.__respond(text='Error: name for new list should be provided!', force_message=True)
+            else:
+                self.__add_list(strip)
+                self.__respond(text='List "' + strip + '" has been added!')
         elif command['text'][:10] is '/show_list':
-            self.__show_list(command['text'][10:])
-
-    def update_message_id(self, new_message_id):
-        ChatHandler.bot.delete_message(self.chat_id, self.message_id)
-        self.message_id = new_message_id
-
+            pass
 
         """
         State 0, the user see list of list.
         """
-
-    def show_list_of_lists(self):
-        ChatHandler.bot.edit_message("Listy:", self.chat_id, self.message_id,
-                                     new_reply_markup=self.__create_view_list_of_lists())
 
     def __create_keyboard_markup_view_list_of_lists(self):
         tuple_of_tuples_of_id_and_name = ChatHandler.db.select_from_list_tab(select_list_id=True, select_list_name=True,
@@ -97,21 +105,3 @@ class ChatHandler:
 
     def __add_list(self, list_name):
         ChatHandler.db.add_list(chat_id=self.chat_id, list_name=list_name, commit=True)
-        if self.state == 0:
-            self.show_list_of_lists()
-
-    """
-    State 1-list_id, the user see list of list items.
-    """
-
-    def show_list_of_items(self, list_id):
-
-
-    def __create_keyboard_markup_view_list(self):
-        tuple_of_tuples_of_id_and_name = ChatHandler.db.select_from_list_tab(select_list_id=True, select_list_name=True,
-                                                                             where_chat_id=self.chat_id)
-
-
-
-    def __add_item(self, item_name, list_id):
-
