@@ -123,3 +123,4 @@ class SQLiteHandler:
             self.log.enter_log("Error during getting list items by list id:\n" + str(er))
 
     def get_list_items_by_position_number(self, position, ):
+        pass
