@@ -1,11 +1,14 @@
 from BotAPI import Bot
 from DatabaseHandlers import SQLiteHandler
-from ListBot import ChatHandler
+from ListBot import ChatHandler, Config
 import time
 
-
-bot = Bot.Bot('783375470:AAHjxORsSMQRcL3T2RIQgFkQs6ZSt9vpemI')
 db = SQLiteHandler.SQLiteHandler()
+last_update_id = db.get_last_update_id()
+if last_update_id is not None:
+    bot = Bot.Bot(Config.bot_token, last_update_id)
+else:
+    bot = Bot.Bot(Config.bot_token)
 ChatHandler.ChatHandler.initialize_class(bot, db)
 
 

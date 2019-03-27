@@ -5,7 +5,7 @@ import urllib
 
 class Bot:
 
-    def __init__(self, token, last_update_id=1):
+    def __init__(self, token, last_update_id=0):
         self.__url = 'https://api.telegram.org/bot' + token + '/'
         self.last_update_id = last_update_id
 
