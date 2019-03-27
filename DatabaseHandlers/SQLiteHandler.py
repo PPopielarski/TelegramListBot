@@ -88,7 +88,7 @@ class SQLiteHandler:
         else:
             raise Exception("Incorrect argument 'deleted'!")
 
-        self.c.execute("SELECT ROW_NUMBER() OVER(ORDER BY list_id) row_num, list_id, list_name FROM list WHERE"
-                       + deleted + " AND chat_id = ? ORDER BY list_id", (chat_id,)).fetchall()
+        return self.c.execute("SELECT ROW_NUMBER() OVER(ORDER BY list_id) row_num, list_id, list_name FROM list WHERE" +
+                              deleted + " AND chat_id = ? ORDER BY list_id", (chat_id,)).fetchall()
 
 
