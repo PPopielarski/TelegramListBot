@@ -16,44 +16,49 @@ class SQLiteHandler:
         self.c = self.conn.cursor()
         self.__create_tables(purge_database)
 
+    def connect(self):
+        self.log = Logger()
+        self.conn = sqlite3.connect('list_bot_db.db')
+        self.c = self.conn.cursor()
+
     def __create_tables(self, drop_if_exists=False):
         """Creates tables, if they already exist it drops them before."""
         try:
             if drop_if_exists:
-                self.c.execute("""  DROP TABLE IF EXISTS chat;
-                                    DROP TABLE IF EXISTS list;
-                                    DROP TABLE IF EXISTS list_item;
-                                    DROP TABLE IF EXISTS scheduled_list_item;
-                                    DROP TABLE IF EXISTS configuration;
-                                    """)
+                self.c.execute("DROP TABLE IF EXISTS chat;")
+                self.c.execute("DROP TABLE IF EXISTS list;")
+                self.c.execute("DROP TABLE IF EXISTS list_item;")
+                self.c.execute("DROP TABLE IF EXISTS scheduled_list_item;")
+                self.c.execute("DROP TABLE IF EXISTS configuration;")
+                self.log.enter_log("Tables dropped.")
 
-            self.c.execute("""
-            CREATE TABLE IF NOT EXISTS chat (chat_id INTEGER PRIMARY KEY);
-            
-            CREATE TABLE IF NOT EXISTS list (list_id INTEGER PRIMARY KEY AUTOINCREMENT, 
-                            chat_id INTEGER NOT NULL, list_name TEXT NOT NULL, deletion_time DATETIME DEFAULT NULL);
-                            
-            UPDATE sqlite_sequence SET seq = MAX(99, (COALESCE((SELECT MAX(list_id) FROM list), 99))) 
-            WHERE name = 'list';
-            INSERT INTO sqlite_sequence (name,seq) SELECT 'list', 99 WHERE NOT EXISTS 
-           (SELECT changes() AS change FROM sqlite_sequence WHERE change <> 0);
-           
-            CREATE TABLE IF NOT EXISTS list_item(item_id INTEGER PRIMARY KEY AUTOINCREMENT,
+            self.c.execute("CREATE TABLE IF NOT EXISTS chat (chat_id INTEGER PRIMARY KEY);")
+
+            self.c.execute("""CREATE TABLE IF NOT EXISTS list (list_id INTEGER PRIMARY KEY AUTOINCREMENT, 
+                            chat_id INTEGER NOT NULL, list_name TEXT NOT NULL, deletion_time DATETIME DEFAULT NULL);""")
+
+            self.c.execute("""UPDATE sqlite_sequence SET seq = MAX(99, (COALESCE((SELECT MAX(list_id) FROM list), 99))) 
+                            WHERE name = 'list';""")
+            self.c.execute("""INSERT INTO sqlite_sequence (name,seq) SELECT 'list', 99 WHERE NOT EXISTS 
+                            (SELECT changes() AS change FROM sqlite_sequence WHERE change <> 0);""")
+
+            self.c.execute("""CREATE TABLE IF NOT EXISTS list_item(item_id INTEGER PRIMARY KEY AUTOINCREMENT,
             list_id INTEGER NOT NULL, item_name INTEGER NOT NULL, deletion_time DATETIME DEFAULT NULL,
-            completion_time DATETIME DEFAULT NULL);
-                            
-            UPDATE sqlite_sequence SET seq = MAX(99, (COALESCE((SELECT MAX(item_id) FROM list_item), 99))) 
-            WHERE name = 'list_item';
-            INSERT INTO sqlite_sequence (name, seq) SELECT 'list_item', 99 WHERE NOT EXISTS 
-           (SELECT changes() AS change FROM sqlite_sequence WHERE change <> 0);
-           
-            CREATE TABLE IF NOT EXISTS scheduled_list_item (scheduled_item_id INTEGER PRIMARY KEY 
-            AUTOINCREMENT, list_id INTEGER NOT NULL, start_time DATETIME NOT NULL, setting_json TEXT);
-            
-            CREATE TABLE IF NOT EXISTS configuration (name TEXT NOT NULL, value TEXT);
-            
-            INSERT INTO configuration (name, value) VALUES ('GetUpdate_offset', Null);
-            """)
+            completion_time DATETIME DEFAULT NULL);""")
+
+            self.c.execute("""UPDATE sqlite_sequence SET seq = MAX(99, (COALESCE((SELECT MAX(item_id) FROM list_item), 99))) 
+            WHERE name = 'list_item';""")
+
+            self.c.execute("""INSERT INTO sqlite_sequence (name, seq) SELECT 'list_item', 99 WHERE NOT EXISTS 
+           (SELECT changes() AS change FROM sqlite_sequence WHERE change <> 0);""")
+
+            self.c.execute("""CREATE TABLE IF NOT EXISTS scheduled_list_item (scheduled_item_id INTEGER PRIMARY KEY 
+            AUTOINCREMENT, list_id INTEGER NOT NULL, start_time DATETIME NOT NULL, setting_json TEXT);""")
+
+            self.c.execute("CREATE TABLE IF NOT EXISTS configuration (name TEXT NOT NULL, value TEXT);")
+
+            self.c.execute("INSERT INTO configuration (name, value) VALUES ('GetUpdate_offset', Null);")
+
             self.conn.commit()
             self.log.enter_log("Tables created.")
         except sqlite3.Error as er:

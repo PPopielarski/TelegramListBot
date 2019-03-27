@@ -6,7 +6,6 @@ import time
 
 bot = Bot.Bot('783375470:AAHjxORsSMQRcL3T2RIQgFkQs6ZSt9vpemI')
 db = SQLiteHandler.SQLiteHandler()
-db.start()
 ChatHandler.ChatHandler.initialize_class(bot, db)
 
 
