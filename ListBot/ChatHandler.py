@@ -1,5 +1,4 @@
 from BotAPI import InlineKeyboard
-import time
 
 
 class ChatHandler:
@@ -51,8 +50,7 @@ class ChatHandler:
     def __respond(self, text, reply_markup=None, force_message=False):
         # checks if more than two days passed since last bot message and if last_message_id is set.
         # Last_message_is is none if last message was from user.
-        if force_message is False and self.last_message_id is not None \
-                and time.time() - self.last_message_date < 172800:
+        if force_message is False and self.last_message_id is not None:
             ChatHandler.bot.edit_message(text, self.chat_id, self.last_message_id, reply_markup)
         else:
             message = ChatHandler.bot.send_message(self, text, self.chat_id, reply_markup)
@@ -85,23 +83,29 @@ class ChatHandler:
             else:
                 self.__add_list(strip)
                 self.__respond(text='List "' + strip + '" has been added!')
+                if self.state == 0:
+                    self.showList()
         elif command['text'][:10] is '/show_list':
             pass
 
         """
-        State 0, the user see list of list.
+        Used in state 0, when the user see list of list.
         """
+    def show_list_of_lists(self):
+        ik = self.__create_keyboard_markup_view_list_of_lists()
+        self.__respond("Your lists:", ik)
 
     def __create_keyboard_markup_view_list_of_lists(self):
-        tuple_of_tuples_of_id_and_name = ChatHandler.db.select_from_list_tab(select_list_id=True, select_list_name=True,
-                                                                             where_chat_id=self.chat_id)
+        tuple_of_tuples_of_id_and_name = ChatHandler.db.get_list_of_lists(self.chat_id)
         ik = InlineKeyboard.InlineKeyboard()
 
         for tup in tuple_of_tuples_of_id_and_name:
-            ik.add_button(text=tup[1], callback_data='show_list-'+tup[0], column=0)
+            ik.add_button(text=tup[0] + '. ' + tup[2], callback_data='show_list-'+tup[1], column=0)
 
         ik.add_button(text='Dodaj listę', callback_data='add_list', column=0)
         return ik.get_keyboard_markup()
 
     def __add_list(self, list_name):
         ChatHandler.db.add_list(chat_id=self.chat_id, list_name=list_name, commit=True)
+
+

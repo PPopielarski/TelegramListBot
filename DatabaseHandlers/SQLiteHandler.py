@@ -24,23 +24,35 @@ class SQLiteHandler:
                                     DROP TABLE IF EXISTS list;
                                     DROP TABLE IF EXISTS list_item;
                                     DROP TABLE IF EXISTS scheduled_list_item;
-                                    DROP TABLE IF EXISTS configuration;""")
+                                    DROP TABLE IF EXISTS configuration;
+                                    """)
 
             self.c.execute("""
             CREATE TABLE IF NOT EXISTS chat (chat_id INTEGER PRIMARY KEY);
+            
             CREATE TABLE IF NOT EXISTS list (list_id INTEGER PRIMARY KEY AUTOINCREMENT, 
                             chat_id INTEGER NOT NULL, list_name TEXT NOT NULL, deletion_time DATETIME DEFAULT NULL);
+                            
+            UPDATE sqlite_sequence SET seq = MAX(99, (COALESCE((SELECT MAX(list_id) FROM list), 99))) 
+            WHERE name = 'list';
+            INSERT INTO sqlite_sequence (name,seq) SELECT 'list', 99 WHERE NOT EXISTS 
+           (SELECT changes() AS change FROM sqlite_sequence WHERE change <> 0);
+           
             CREATE TABLE IF NOT EXISTS list_item(item_id INTEGER PRIMARY KEY AUTOINCREMENT,
-                            list_id INTEGER NOT NULL, item_name INTEGER NOT NULL, 
-                            deletion_time DATETIME DEFAULT NULL);
+            list_id INTEGER NOT NULL, item_name INTEGER NOT NULL, deletion_time DATETIME DEFAULT NULL,
+            completion_time DATETIME DEFAULT NULL);
+                            
+            UPDATE sqlite_sequence SET seq = MAX(99, (COALESCE((SELECT MAX(item_id) FROM list_item), 99))) 
+            WHERE name = 'list_item';
+            INSERT INTO sqlite_sequence (name, seq) SELECT 'list_item', 99 WHERE NOT EXISTS 
+           (SELECT changes() AS change FROM sqlite_sequence WHERE change <> 0);
+           
             CREATE TABLE IF NOT EXISTS scheduled_list_item (scheduled_item_id INTEGER PRIMARY KEY 
             AUTOINCREMENT, list_id INTEGER NOT NULL, start_time DATETIME NOT NULL, setting_json TEXT);
+            
             CREATE TABLE IF NOT EXISTS configuration (name TEXT NOT NULL, value TEXT);
+            
             INSERT INTO configuration (name, value) VALUES ('GetUpdate_offset', Null);
-            CREATE VIEW IF NOT EXISTS numbered_item_list AS select 
-            item_id, list_id, item_name, deletion_time, ROW_NUMBER() OVER(ORDER BY item_id) row_num from list_item;
-            CREATE VIEW IF NOT EXISTS numbered_list AS select 
-            list_id, chat_id, list_name, deletion_time, ROW_NUMBER() OVER(ORDER BY list_id) row_num from list;
             """)
             self.conn.commit()
             self.log.enter_log("Tables created.")
@@ -61,16 +73,17 @@ class SQLiteHandler:
         except sqlite3.Error as er:
             self.log.enter_log("Error during connecting to database:\n" + str(er))
 
-    def add_list(self, chat_id, list_name, deletion_time=None):
-        self.c.execute('''INSERT INTO list (chat_id, list_num, list_name) values (?, (SELECT MAX(list_num) + 1 FROM list 
-                        WHERE list.chat_id = ''' + str(chat_id) + ') ,?)', (chat_id, list_name))
-        try:
-            if int(self.c.execute("SELECT EXISTS (SELECT COUNT(1) FROM list WHERE chat_id = ? LIMIT 1)",
-                                  (chat_id,)).fetchone()[0]) > 0:
-                return False
-            self.c.execute("insert into list (chat_id, list_name) values(?, ?)", (chat_id, list_name))
-            self.conn.commit()
-        except sqlite3.Error as er:
-            self.conn.rollback()
-            self.log.enter_log("Error during adding new list (chat_id = "+str(chat_id)+", list_name ="+list_name+"):\n"
-                               + str(er))
+    def get_list_of_lists(self, chat_id, deleted=False):
+        if deleted:
+            deleted = " deletion_time < (SELECT DATETIME('now'))"
+        elif not deleted:
+            deleted = " (deletion_time >= (SELECT DATETIME('now')) OR deletion_time IS NULL)"
+        elif deleted is None:
+            deleted = ' '
+        else:
+            raise Exception("Incorrect argument 'deleted'!")
+
+        self.c.execute("SELECT ROW_NUMBER() OVER(ORDER BY list_id) row_num, list_id, list_name FROM list WHERE"
+                       + deleted + " AND chat_id = ? ORDER BY list_id", (chat_id,)).fetchall()
+
+
