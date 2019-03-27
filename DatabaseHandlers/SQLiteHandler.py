@@ -1,6 +1,6 @@
 import sqlite3
 import os.path
-from DatabaseHandlers.DBLogger import Logger
+from ListBot.Logger import Logger
 
 
 class SQLiteHandler:

@@ -76,7 +76,7 @@ class ChatHandler:
 
     def handle_command(self, command):
         strip = command['text'].lstrip()
-        if strip[:9] is '/add_list':
+        if len(strip) >= 9 and strip[:9] is '/add_list':
             strip = strip[9:].strip()
             if len(strip) == 0:
                 self.__respond(text='Error: name for new list should be provided!', force_message=True)
@@ -84,8 +84,8 @@ class ChatHandler:
                 self.__add_list(strip)
                 self.__respond(text='List "' + strip + '" has been added!')
                 if self.state == 0:
-                    self.showList()
-        elif command['text'][:10] is '/show_list':
+                    self.show_list_of_lists()
+        elif len(strip) >= 10 and strip[:10] is '/show_list':
             pass
 
         """
