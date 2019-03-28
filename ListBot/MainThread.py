@@ -3,14 +3,13 @@ from DatabaseHandlers import SQLiteHandler
 from ListBot import ChatHandler, Config
 import time
 
-db = SQLiteHandler.SQLiteHandler()
-last_update_id = db.get_last_update_id()
-if last_update_id is not None:
-    bot = Bot.Bot(Config.bot_token, last_update_id)
-else:
-    bot = Bot.Bot(Config.bot_token)
+db = SQLiteHandler.SQLiteHandler(Config.sqlite_db_path)
+bot = Bot.Bot(Config.bot_token)
 ChatHandler.ChatHandler.initialize_class(bot, db)
+# getUpdates request sent in order to remove updates from time before bot was run.
+bot.get_updates(timeout=0)
 
+chat_
 
 while True:
     ChatHandler.ChatHandler.get_updates()

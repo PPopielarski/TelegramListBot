@@ -5,9 +5,9 @@ import urllib
 
 class Bot:
 
-    def __init__(self, token, last_update_id=0):
+    def __init__(self, token):
         self.__url = 'https://api.telegram.org/bot' + token + '/'
-        self.last_update_id = last_update_id
+        self.last_update_id = 0
 
     def __send_post_request(self, parameters_dict):
         """Sends request to bot and returns json file with response
@@ -19,10 +19,8 @@ class Bot:
 
     def get_updates(self, offset=True, timeout=100):
         request = {"timeout": timeout, "method": "getUpdates"}
-        if offset is True:
+        if offset is True and self.last_update_id != 0:
             request["offset"] = self.last_update_id + 1
-        elif type(offset) == 'int':
-            request["offset"] = offset
         result = self.__send_post_request(request)
         if 'result' in result:
             for update_id in result["result"]:

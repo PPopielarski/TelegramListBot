@@ -53,6 +53,7 @@ class ChatHandler:
         # Last_message_is is none if last message was from user.
         if force_message is False and self.last_message_id is not None:
             ChatHandler.bot.edit_message(text, self.chat_id, self.last_message_id, reply_markup)
+            ChatHandler.bot.send_chat_action(self.chat_id, 'typing')
         else:
             message = ChatHandler.bot.send_message(self, text, self.chat_id, reply_markup)
             self.last_message_date = message['date']

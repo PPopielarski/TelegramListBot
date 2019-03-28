@@ -1,20 +1,22 @@
 import sqlite3
 import os.path
 from ListBot.Logger import Logger
-from ListBot import Config
+import time
+from shutil import copyfile
 
 
 class SQLiteHandler:
 
-    def __init__(self, purge_database=False):
+    def __init__(self, db_path, purge_database=False):
         self.log = Logger(purge_database)
+        self.db_path = db_path
 
         try:
-            if os.path.exists(Config.sqlite_db_path):
-                self.conn = sqlite3.connect(Config.sqlite_db_path)
+            if os.path.exists(self.db_path):
+                self.conn = sqlite3.connect(self.db_path)
                 self.c = self.conn.cursor()
             else:
-                self.conn = sqlite3.connect(Config.sqlite_db_path)
+                self.conn = sqlite3.connect(self.db_path)
                 self.log.enter_log("Database file created.")
                 self.c = self.conn.cursor()
         except sqlite3.Error as er:
@@ -28,7 +30,6 @@ class SQLiteHandler:
                 self.c.execute("DROP TABLE IF EXISTS list;")
                 self.c.execute("DROP TABLE IF EXISTS list_item;")
                 self.c.execute("DROP TABLE IF EXISTS scheduled_list_item;")
-                self.c.execute("DROP TABLE IF EXISTS configuration;")
                 self.log.enter_log("Tables dropped.")
 
             self.c.execute("CREATE TABLE IF NOT EXISTS chat (chat_id INTEGER PRIMARY KEY);")
@@ -53,10 +54,6 @@ class SQLiteHandler:
             self.c.execute("""CREATE TABLE IF NOT EXISTS scheduled_list_item (scheduled_item_id INTEGER PRIMARY KEY 
             AUTOINCREMENT, start_time DATETIME NOT NULL, setting_json TEXT);""")
 
-            self.c.execute("CREATE TABLE IF NOT EXISTS configuration (name TEXT NOT NULL, value TEXT);")
-
-            self.c.execute("INSERT INTO configuration (name, value) VALUES ('last_update_id', Null);")
-
             self.conn.commit()
             self.log.enter_log("Tables created.")
         except sqlite3.Error as er:
@@ -65,26 +62,26 @@ class SQLiteHandler:
 
     def connect(self):
         self.log = Logger()
-        self.conn = sqlite3.connect(Config.sqlite_db_path)
+        self.conn = sqlite3.connect(self.db_path)
         self.c = self.conn.cursor()
         self.log.enter_log("Database connected.")
 
     def disconnect(self):
-        del self.c
         self.conn.close()
         del self.conn
+        del self.c
         self.log.enter_log("Database disconnected.")
 
-    def get_last_update_id(self):
-        try:
-            res = self.c.execute('SELECT value FROM configuration WHERE name = "last_update_id" ').fetchone()
-            if len(res) == 1:
-                return int(res)
-            else:
-                return None
-        except sqlite3.Error as er:
-            self.log.enter_log("Error during reading last update id:\n" + str(er))
-            return None
+    def create_backup(self, backup_folder_path):
+        name = self.db_path.split('\\')[-1][:-3] + '_bck_' + time()
+        if not os.path.exists(backup_folder_path + '\\' + name):
+            try:
+                copyfile(self.db_path, backup_folder_path + '\\' + name)
+            except IOError as e:
+                self.log.enter_log("Error during creating database backup:\n" + str(e))
+            self.log.enter_log("Database backup created: " + name)
+        else:
+            self.log.enter_log("Error during creating database backup: file already exists.")
 
     def set_last_update_id(self, last_update_id):
         try:
