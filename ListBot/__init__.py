@@ -1,1 +1,1 @@
-from ListBot import ChatHandler
+from ListBot import Chat
