@@ -47,6 +47,15 @@ class CommandHandler:
         self.chat_dict[chat_id].respond("Your lists:", ik)
         self.chat_dict[chat_id].state = 0
 
+    def __delete_list(self, chat_id, arguments):
+        if arguments.isdigit():
+            if int(arguments) > 99:
+                success = self.db.delete_list_by_id(chat_id, list_id=arguments)
+            else:
+                success = self.db.delete_list_by_id(chat_id, list_id=arguments)
+        else:
+            pass
+
     def __populate_function_dictionary(self):
         self.add_function('/add_list', self.__add_list)
         self.add_function('/show_lists', self.__show_lists_of_lists)

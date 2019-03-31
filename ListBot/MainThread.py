@@ -28,6 +28,7 @@ while True:
         # creating chat instance if necessary
         if chat_id not in chat_dict:
             chat_dict[chat_id] = Chat.Chat(chat_id, bot_api)
+            chat_dict[chat_id].state = 0
 
         # selecting appropriate handler
         if "message" in update:
@@ -37,9 +38,9 @@ while True:
                     text = text.split(' ', 1)
                     chat_dict[chat_id].command = None
                     if len(text) == 2:
-                        command_handler.get_function(text[0])(chat_id, text[1])
+                        command_handler.get_function(text[0].split())(chat_id, text[1].split())
                     else:
-                        command_handler.get_function(text[0])(chat_id, '')
+                        command_handler.get_function(text[0].split())(chat_id, '')
             else:
                 pass # placeholder for handling messages
         elif 'callback_query' in update:

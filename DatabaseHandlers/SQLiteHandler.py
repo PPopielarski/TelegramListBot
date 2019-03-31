@@ -91,6 +91,37 @@ class SQLiteHandler:
             self.log.enter_log("Error during inserting new list (chat_id = " + chat_id + ", list_name = " + list_name +
                                "):\n" + str(er))
 
+    def delete_list_by_id(self, chat_id, list_id):
+        try:
+            if len(self.c.execute("SELECT TOP (1) 1 FROM list WHERE list_id = ? AND chat_id = ?",
+                                  (list_id, chat_id)).fetchone()) == 1:
+                return False
+            self.c.execute("UPDATE list SET deletion_time = (SELECT DATETIME('now')) WHERE list_id = ?", list_id)
+            self.c.execute("UPDATE list_item SET deletion_time = (SELECT DATETIME('now')) WHERE list_id = ?", list_id)
+            self.conn.commit()
+            return True
+        except sqlite3.Error as er:
+            self.conn.rollback()
+            self.log.enter_log("Error during inserting deletion_time to lists list_id = " + str(list_id) + "):\n"
+                               + str(er))
+            return False
+
+    def delete_list_by_position(self, chat_id, position):
+        try:
+            if self.c.execute("SELECT count(1) FROM list WHERE AND chat_id = ? ORDER BY list_id",
+                              chat_id).fetchone()[0] >= position:
+
+                return False
+            self.c.execute("UPDATE list SET deletion_time = (SELECT DATETIME('now')) WHERE list_id = ?", list_id)
+            self.c.execute("UPDATE list_item SET deletion_time = (SELECT DATETIME('now')) WHERE list_id = ?", list_id)
+            self.conn.commit()
+            return True
+        except sqlite3.Error as er:
+            self.conn.rollback()
+            self.log.enter_log("Error during inserting deletion_time to lists list_id = " + str(list_id) + "):\n"
+                               + str(er))
+            return False
+
     def get_list_of_lists(self, chat_id, deleted=False):
         if deleted:
             deleted = " deletion_time < (SELECT DATETIME('now')) AND "
@@ -121,6 +152,3 @@ class SQLiteHandler:
                                   (deleted, list_id)).fetchall()
         except sqlite3.Error as er:
             self.log.enter_log("Error during getting list items by list id:\n" + str(er))
-
-    def get_list_items_by_position_number(self, position, ):
-        pass
