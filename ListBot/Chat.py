@@ -1,4 +1,3 @@
-from BotAPI import InlineKeyboard
 
 
 class Chat:
