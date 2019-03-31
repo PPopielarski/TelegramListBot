@@ -1,19 +1,22 @@
-from BotAPI import Bot
+from BotAPI import BotAPI
 from DatabaseHandlers import SQLiteHandler
-from ListBot import Chat, Config
+from ListBot import Chat, Config, CommandHandler
 import time
 
 db = SQLiteHandler.SQLiteHandler(Config.sqlite_db_path)
-bot = Bot.Bot(Config.bot_token)
+bot_api = BotAPI.BotAPI(Config.bot_token)
 chat_dict = {}
-# getUpdates request sent in order to remove updates from time before bot was run.
-bot.get_updates(timeout=0)
+bot_api.get_updates(timeout=1)
+# message_handler = MessageHandler.get()
+command_handler = CommandHandler.CommandHandler(bot_api, chat_dict, db)
+# callback_handler = CallbackHandler.get()
+# getUpdates request sent in order to remove updates sent before bot was run.
 
 
 while True:
 
     # get updates from bot and loop for all of them
-    for update in bot.get_updates():
+    for update in bot_api.get_updates()['result']:
         # retrieving chat_id
         if 'callback_query' in update:
             chat_id = update['callback_query']['message']['chat']['id']
@@ -22,25 +25,28 @@ while True:
         else:
             continue
 
-        # creating or reading Chat instance
-        if chat_id in chat_dict:
-            chat = chat_dict[chat_id]
-        else:
-            message = bot.send_message("List Bot", chat_id)['result']
-            chat = Chat(chat_id, message['message_id'], message['date'])
-            chat_dict[chat_id] = chat
+        # creating chat instance if necessary
+        if chat_id not in chat_dict:
+            chat_dict[chat_id] = Chat.Chat(chat_id, bot_api)
 
         # selecting appropriate handler
         if "message" in update:
-            chat_dict[chat_id].last_message_id = None
-            if 'entities' in update['message']:
-                if update['message']['entities']['type'] is "bot_command":
-                    pass  # placeholder for handling commands
+            chat_dict[chat_id].last_message_id = None  # if user sends message then response should be new message
+            text = update['message']['text'].strip()
+            if text.split(' ', 1)[0][0] is '/':  # checks if message is a command
+                    text = text.split(' ', 1)
+                    chat_dict[chat_id].command = None
+                    if len(text) == 2:
+                        command_handler.get_function(text[0])(chat_id, text[1])
+                    else:
+                        command_handler.get_function(text[0])(chat_id, '')
             else:
                 pass # placeholder for handling messages
         elif 'callback_query' in update:
-            pass # placeholder for handling callback
+            pass  # placeholder for handling callback
 
     # end of handling updates
 
-    # TODO placeholder for handling scheduled tasks
+    # TODO handling scheduled tasks
+
+    time.sleep(0.5)

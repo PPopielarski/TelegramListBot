@@ -1,2 +1,2 @@
 from BotAPI import InlineKeyboard
-from BotAPI import Bot
+from BotAPI import BotAPI
