@@ -1,14 +1,14 @@
 import sqlite3
 import os.path
-from ListBot.Logger import Logger
+
 import time
 from shutil import copyfile
 
 
 class SQLiteHandler:
 
-    def __init__(self, db_path, purge_database=False, purge_log=True):
-        self.log = Logger(purge_log)
+    def __init__(self, db_path, log, purge_database=False):
+        self.log = log
         self.db_path = db_path
 
         try:
@@ -116,27 +116,6 @@ class SQLiteHandler:
             WHERE row_num = ?""", (chat_id, position)).fetchone()
             if len(list_id) == 0:
                 return False
-            else:
-                list_id = list_id[0]
-            self.c.execute("UPDATE list SET deletion_time = (SELECT DATETIME('now')) WHERE list_id = ?", list_id)
-            self.c.execute("UPDATE list_item SET deletion_time = (SELECT DATETIME('now')) WHERE list_id = ?", list_id)
-            self.conn.commit()
-            return True
-        except sqlite3.Error as er:
-            self.conn.rollback()
-            self.log.enter_log("Error during updating deletion_time to lists position = " + str(list_id) + "):\n"
-                               + str(er))
-            return False
-
-    def delete_list_by_position(self, chat_id, position):
-        try:
-            list_id = self.c.execute("""WITH temp AS (SELECT list_id FROM list WHERE chat_id = ? AND 
-            (deletion_time IS NULL OR deletion_time >= (SELECT DATETIME('now'))))
-            SELECT list_id FROM
-            (SELECT list_id, (select count(1) from temp b where a.list_id >= b.list_id) row_num from temp a)
-            WHERE row_num = ?""", (chat_id, position)).fetchone()
-            if len(list_id) == 0:
-                return False
             list_id = list_id[0]
             self.c.execute("UPDATE list SET deletion_time = (SELECT DATETIME('now')) WHERE list_id = ?", list_id)
             self.c.execute("UPDATE list_item SET deletion_time = (SELECT DATETIME('now')) WHERE list_id = ?", list_id)
@@ -159,6 +138,14 @@ class SQLiteHandler:
             self.log.enter_log("Error during inserting deletion_time for list (list_name = " + str(name) +
                                ", chat_id = " + chat_id + "):\n" + str(er))
             return False
+
+    def get_list_id_by_name(self, chat_id, list_name):
+        try:
+            return self.c.execute("""SELECT list_id from list 
+                                                WHERE list_name = ? and chat_id = ?""", (list_name, chat_id)).fetchall()
+        except sqlite3.Error as er:
+            self.log.enter_log("Error during selecting list_id by name (list_name = " + str(list_name) +
+                               ", chat_id = " + chat_id + "):\n" + str(er))
 
     def get_list_of_lists(self, chat_id, deleted=False):
         if deleted:

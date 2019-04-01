@@ -1,9 +1,10 @@
 from BotAPI import BotAPI
 from DatabaseHandlers import SQLiteHandler
-from ListBot import Chat, Config, CommandHandler
+from ListBot import Chat, Config, CommandHandler, Logger
 import time
 
-db = SQLiteHandler.SQLiteHandler(Config.sqlite_db_path)
+logger = Logger.Logger()
+db = SQLiteHandler.SQLiteHandler(Config.sqlite_db_path, logger)
 bot_api = BotAPI.BotAPI(Config.bot_token)
 chat_dict = {}
 bot_api.get_updates(timeout=1)
@@ -23,6 +24,7 @@ while True:
         elif 'message' in update:
             chat_id = update['message']['chat']['id']
         else:
+            logger.enter_log("Update not recognised:\n" + str(update))
             continue
 
         # creating chat instance if necessary
