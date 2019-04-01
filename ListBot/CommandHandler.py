@@ -59,7 +59,7 @@ class CommandHandler:
                     self.chat_dict[chat_id].respond("List with ID " + arguments + " deleted.")
                     return success
             else:
-                success = self.db.delete_list_by_position(chat_id, position=arguments)  # TODO
+                success = self.db.delete_list_by_position(chat_id, position=arguments)
                 if success:
                     self.chat_dict[chat_id].respond("List on position " + arguments + " deleted.")
                     return success
@@ -73,15 +73,40 @@ class CommandHandler:
         else:
             if arguments[0] == '"' and arguments[-1] == '"':
                 arguments = arguments[1:-1]
-            success = self.db.delete_list_by_name(chat_id, list_name=arguments)  # TODO
+            success = self.db.delete_list_by_name(chat_id, list_name=arguments)
             if success:
                 self.chat_dict[chat_id].respond('List with name "' + arguments + '" deleted.')
             else:
                 self.chat_dict[chat_id].respond('List with name "' + arguments + '" could not be found.')
             return success
 
+    def __rename_list(self, chat_id, arguments):
+        if len(arguments.split(' ')) < 2:
+        
+        if arguments.split(' ', 1)[0].isdigit():
+            number = arguments.split(' ', 1)[0].stripe()
+            new_name = arguments.split(' ', 1)[1].stripe()
+            if number > 99:
+                success = self.db.rename_list_by_id(chat_id, number, new_name)  # TODO
+                if success:
+                    self.chat_dict[chat_id].respond('List with ID ' + number + ' renamed as "' + new_name + '".')
+                    return success
+            else:
+                success = self.db.rename_list_by_position(chat_id, number, new_name)  # TODO
+                if success:
+                    self.chat_dict[chat_id].respond('List on position ' + number + ' renamed as "' + new_name + '".')
+                    return success
+            if not success:
+                success = self.db.rename_list_by_position(chat_id, number, new_name)
+                if success:
+                    self.chat_dict[chat_id].respond('List on position ' + number + ' renamed as "' + new_name + '".')
+                    return success
+            if not success:
+                self.chat_dict[chat_id].respond('Unknown list provided.')
+            return success
+
     def __populate_function_dictionary(self):
-        self.add_function('/add_list', self.__add_list)
+        self.add_function('/add.list', self.__add_list)
         self.add_function('/show_lists', self.__show_lists_of_lists)
-        self.add_function('/delete_list', self.__delete_list)
+        self.add_function('/delete.list', self.__delete_list)
 

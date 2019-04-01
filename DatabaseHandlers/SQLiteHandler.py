@@ -109,21 +109,55 @@ class SQLiteHandler:
 
     def delete_list_by_position(self, chat_id, position):
         try:
-            if self.c.execute("""SELECT list_id FROM
-            (SELECT list_id, (select count(1) from list b where a.list_id >= b.list_id) 
-            row_num FROM list a WHERE chat_id = ? AND 
-            (deletion_time >= (SELECT DATETIME('now')) OR deletion_time IS NULL) ORDER BY deletion_time, list_id),
+            list_id = self.c.execute("""WITH temp AS (SELECT list_id FROM list WHERE chat_id = ? AND 
+            (deletion_time IS NULL OR deletion_time >= (SELECT DATETIME('now'))))
+            SELECT list_id FROM
+            (SELECT list_id, (select count(1) from temp b where a.list_id >= b.list_id) row_num from temp a)
             WHERE row_num = ?""", (chat_id, position)).fetchone()
-
+            if len(list_id) == 0:
                 return False
+            else:
+                list_id = list_id[0]
             self.c.execute("UPDATE list SET deletion_time = (SELECT DATETIME('now')) WHERE list_id = ?", list_id)
             self.c.execute("UPDATE list_item SET deletion_time = (SELECT DATETIME('now')) WHERE list_id = ?", list_id)
             self.conn.commit()
             return True
         except sqlite3.Error as er:
             self.conn.rollback()
-            self.log.enter_log("Error during updating deletion_time to lists list_id = " + str(list_id) + "):\n"
+            self.log.enter_log("Error during updating deletion_time to lists position = " + str(list_id) + "):\n"
                                + str(er))
+            return False
+
+    def delete_list_by_position(self, chat_id, position):
+        try:
+            list_id = self.c.execute("""WITH temp AS (SELECT list_id FROM list WHERE chat_id = ? AND 
+            (deletion_time IS NULL OR deletion_time >= (SELECT DATETIME('now'))))
+            SELECT list_id FROM
+            (SELECT list_id, (select count(1) from temp b where a.list_id >= b.list_id) row_num from temp a)
+            WHERE row_num = ?""", (chat_id, position)).fetchone()
+            if len(list_id) == 0:
+                return False
+            list_id = list_id[0]
+            self.c.execute("UPDATE list SET deletion_time = (SELECT DATETIME('now')) WHERE list_id = ?", list_id)
+            self.c.execute("UPDATE list_item SET deletion_time = (SELECT DATETIME('now')) WHERE list_id = ?", list_id)
+            self.conn.commit()
+            return True
+        except sqlite3.Error as er:
+            self.conn.rollback()
+            self.log.enter_log("Error during updating deletion_time to lists position = " + str(list_id) + "):\n"
+                               + str(er))
+            return False
+
+    def delete_list_by_name(self, chat_id, name):
+        try:
+            list_id = self.c.execute("""SELECT list_id from list 
+                                    WHERE list_name = ? and chat_id = ?""", (name, chat_id)).fetchone()
+            if len(list_id) == 0:
+                return False
+            return self.delete_list_by_id(chat_id, list_id[0])
+        except sqlite3.Error as er:
+            self.log.enter_log("Error during inserting deletion_time for list (list_name = " + str(name) +
+                               ", chat_id = " + chat_id + "):\n" + str(er))
             return False
 
     def get_list_of_lists(self, chat_id, deleted=False):
