@@ -1,13 +1,11 @@
 import json
 import requests
-import urllib
 
 
-class BotAPI:
+class TelegramBotAPI:
 
     def __init__(self, token):
         self.__url = 'https://api.telegram.org/bot' + token + '/'
-        self.last_update_id = 0
 
     def __send_post_request(self, parameters_dict):
         """Sends request to bot and returns json file with response
@@ -17,16 +15,8 @@ class BotAPI:
     def get_bot_details(self):
         return self.__send_post_request({"method": "getme"})
 
-    def get_updates(self, offset=True, timeout=100):
-        request = {"timeout": timeout, "method": "getUpdates"}
-        if offset is True and self.last_update_id != 0:
-            request["offset"] = self.last_update_id + 1
-        result = self.__send_post_request(request)
-        if 'result' in result:
-            for update_id in result["result"]:
-                if int(update_id['update_id']) > self.last_update_id:
-                    self.last_update_id = int(update_id['update_id'])
-        return result
+    def get_updates(self, offset, timeout=100):
+        return self.__send_post_request({"offset": offset, "timeout": timeout, "method": "getUpdates"})
 
     def send_message(self, text, chat_id, reply_markup=None):
         if reply_markup is not None and type(reply_markup) is not str:

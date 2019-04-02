@@ -19,7 +19,7 @@ class InlineKeyboard:
         ik.__rows_dict = rows_dict
         return ik
 
-    def __init__(self, resize_keyboard=True, one_time_keyboard=False, selective=False):
+    def __init__(self, resize_keyboard=True, one_time_keyboard=True, selective=False):
         self.__rows_dict = {}
         self.resize_keyboard = resize_keyboard
         self.selective = selective

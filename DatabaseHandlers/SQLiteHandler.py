@@ -7,21 +7,21 @@ from shutil import copyfile
 
 class SQLiteHandler:
 
-    def __init__(self, db_path, log, purge_database=False):
-        self.log = log
+    def __init__(self, db_path, log_handler=None, purge_database=False):
+        self.log_handler = log_handler
         self.db_path = db_path
 
         try:
             if os.path.exists(self.db_path):
-                self.log.enter_log("Database file found.")
+                self.__create_log("Database file found.")
                 self.conn = sqlite3.connect(self.db_path)
                 self.c = self.conn.cursor()
             else:
                 self.conn = sqlite3.connect(self.db_path)
-                self.log.enter_log("Database file created.")
+                self.__create_log("Database file created.")
                 self.c = self.conn.cursor()
         except sqlite3.Error as er:
-            self.log.enter_log("Error during creating database file:\n" + str(er))
+            self.__create_log("Error during creating database file:\n" + str(er))
 
         try:
             if purge_database:
@@ -29,7 +29,7 @@ class SQLiteHandler:
                 self.c.execute("DROP TABLE IF EXISTS list;")
                 self.c.execute("DROP TABLE IF EXISTS list_item;")
                 self.c.execute("DROP TABLE IF EXISTS scheduled_list_item;")
-                self.log.enter_log("Tables dropped.")
+                self.__create_log("Tables dropped.")
 
             self.c.execute("CREATE TABLE IF NOT EXISTS chat (chat_id INTEGER PRIMARY KEY);")
 
@@ -54,22 +54,25 @@ class SQLiteHandler:
             AUTOINCREMENT, start_time DATETIME NOT NULL, setting_json TEXT);""")
 
             self.conn.commit()
-            self.log.enter_log("Tables created.")
+            self.__create_log("Tables created.")
         except sqlite3.Error as er:
             self.conn.rollback()
-            self.log.enter_log("Error during tables creation:\n" + str(er))
+            self.__create_log("Error during tables creation:\n" + str(er))
+
+    def __create_log(self, log):
+        if self.log_handler is not None:
+            self.log_handler.enter_log(log)
 
     def connect(self):
-        self.log = Logger()
         self.conn = sqlite3.connect(self.db_path)
         self.c = self.conn.cursor()
-        self.log.enter_log("Database connected.")
+        self.__create_log("Database connected.")
 
     def disconnect(self):
         self.conn.close()
         del self.conn
         del self.c
-        self.log.enter_log("Database disconnected.")
+        self.__create_log("Database disconnected.")
 
     def create_backup(self, backup_folder_path):
         name = self.db_path.split('\\')[-1][:-3] + '_bck_' + time.time()
@@ -77,10 +80,10 @@ class SQLiteHandler:
             try:
                 copyfile(self.db_path, backup_folder_path + '\\' + name)
             except IOError as e:
-                self.log.enter_log("Error during creating database backup:\n" + str(e))
-            self.log.enter_log("Database backup created: " + name)
+                self.__create_log("Error during creating database backup:\n" + str(e))
+                self.__create_log("Database backup created: " + name)
         else:
-            self.log.enter_log("Error during creating database backup: file already exists.")
+            self.__create_log("Error during creating database backup: file already exists.")
 
     def add_list(self, chat_id, list_name):
         try:
@@ -88,8 +91,8 @@ class SQLiteHandler:
             self.conn.commit()
         except sqlite3.Error as er:
             self.conn.rollback()
-            self.log.enter_log("Error during inserting new list (chat_id = " + chat_id + ", list_name = " + list_name +
-                               "):\n" + str(er))
+            self.__create_log("Error during inserting new list (chat_id = " + chat_id + ", list_name = " + list_name +
+                              "):\n" + str(er))
 
     def delete_list_by_id(self, chat_id, list_id):
         try:
@@ -103,8 +106,8 @@ class SQLiteHandler:
             return True
         except sqlite3.Error as er:
             self.conn.rollback()
-            self.log.enter_log("Error during inserting deletion_time for list (list_id = " + str(list_id) +
-                               ", chat_id = " + chat_id + "):\n" + str(er))
+            self.__create_log("Error during inserting deletion_time for list (list_id = " + str(list_id) +
+                              ", chat_id = " + chat_id + "):\n" + str(er))
             return False
 
     def delete_list_by_position(self, chat_id, position):
@@ -123,8 +126,8 @@ class SQLiteHandler:
             return True
         except sqlite3.Error as er:
             self.conn.rollback()
-            self.log.enter_log("Error during updating deletion_time to lists position = " + str(list_id) + "):\n"
-                               + str(er))
+            self.__create_log("Error during updating deletion_time to lists position (position =" + str(position) +
+                              ", chat_id = " + chat_id + "):\n" + str(er))
             return False
 
     def delete_list_by_name(self, chat_id, name):
@@ -135,8 +138,8 @@ class SQLiteHandler:
                 return False
             return self.delete_list_by_id(chat_id, list_id[0])
         except sqlite3.Error as er:
-            self.log.enter_log("Error during inserting deletion_time for list (list_name = " + str(name) +
-                               ", chat_id = " + chat_id + "):\n" + str(er))
+            self.__create_log("Error during inserting deletion_time for list (list_name = " + str(name) +
+                              ", chat_id = " + chat_id + "):\n" + str(er))
             return False
 
     def get_list_id_by_name(self, chat_id, list_name):
@@ -144,8 +147,8 @@ class SQLiteHandler:
             return self.c.execute("""SELECT list_id from list 
                                                 WHERE list_name = ? and chat_id = ?""", (list_name, chat_id)).fetchall()
         except sqlite3.Error as er:
-            self.log.enter_log("Error during selecting list_id by name (list_name = " + str(list_name) +
-                               ", chat_id = " + chat_id + "):\n" + str(er))
+            self.__create_log("Error during selecting list_id by name (list_name = " + str(list_name) +
+                              ", chat_id = " + chat_id + "):\n" + str(er))
 
     def get_list_of_lists(self, chat_id, deleted=False):
         if deleted:
@@ -161,7 +164,7 @@ class SQLiteHandler:
                                   b.list_id) row_num FROM list a WHERE """ + deleted
                                   + " chat_id = ? ORDER BY deletion_time, list_id", (chat_id,)).fetchall()
         except sqlite3.Error as er:
-            self.log.enter_log("Error during selecting list of lists (chat_id = " + str(chat_id) + "):\n" + str(er))
+            self.__create_log("Error during selecting list of lists (chat_id = " + str(chat_id) + "):\n" + str(er))
 
     def get_list_items_by_list_id(self, list_id, deleted=False):
         if deleted:
@@ -177,4 +180,4 @@ class SQLiteHandler:
                                   list_item WHERE? AND list_id = ? ORDER BY item_id""",
                                   (deleted, list_id)).fetchall()
         except sqlite3.Error as er:
-            self.log.enter_log("Error during getting list items by list id:\n" + str(er))
+            self.__create_log("Error during getting list items by list id:\n" + str(er))

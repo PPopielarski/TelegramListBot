@@ -1,4 +1,4 @@
-from BotAPI import InlineKeyboard
+from BotFramework import InlineKeyboard
 
 
 class CommandHandler:
@@ -10,8 +10,8 @@ class CommandHandler:
         self.db = db
         self.__populate_function_dictionary()
 
-    def add_function(self, name, function):
-        self.function_dict[name] = function
+    def add_function(self, name, f):
+        self.function_dict[name] = f
 
     def get_function(self, function_name):
         return self.function_dict.get(function_name)

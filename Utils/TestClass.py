@@ -1,6 +1,5 @@
 from DatabaseHandlers import SQLiteHandler
-from ListBot import Chat, Config, CommandHandler
-import sqlite3
+from ListBot import Config
 
 db = SQLiteHandler.SQLiteHandler(Config.sqlite_db_path)
 db.conn.set_trace_callback(print)

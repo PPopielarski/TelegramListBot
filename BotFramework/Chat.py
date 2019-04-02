@@ -3,8 +3,8 @@
 class Chat:
 
     """
-    Callback query pattern: state_number-command_name-list_id-item_id
-    Possible action names:
+    Callback query pattern: command_name-first_arg-second_arg-(...)
+    List of views:
     0 - list of lists
     1 - list view
     2 - item view
@@ -17,9 +17,10 @@ class Chat:
         self.bot_api = bot_api
         self.chat_id = chat_id
         self.last_message_id = None
-        self.state = None
+        self.view = None
         self.command = None
         self.arguments_dict = {}
+        self.settings_dict = {}
 
     def respond(self, text, reply_markup=None, force_message=False):
         # checks if more than two days passed since last bot message and if last_message_id is set.
