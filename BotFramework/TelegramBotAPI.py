@@ -21,7 +21,6 @@ class TelegramBotAPI:
     def send_message(self, text, chat_id, reply_markup=None):
         if reply_markup is not None and type(reply_markup) is not str:
             reply_markup = reply_markup.get_keyboard_markup()
-        # text = urllib.parse.quote_plus(text)
         request = {"method": "sendMessage", "text": text, "chat_id": chat_id}
         if reply_markup:
             request['reply_markup'] = reply_markup

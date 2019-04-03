@@ -2,17 +2,6 @@
 
 class Chat:
 
-    """
-    Callback query pattern: command_name-first_arg-second_arg-(...)
-    List of views:
-    0 - list of lists
-    1 - list view
-    2 - item view
-    3 - user option view
-    4 - list option view
-    5 - item option view
-    """
-
     def __init__(self, chat_id, bot_api):
         self.bot_api = bot_api
         self.chat_id = chat_id

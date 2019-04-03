@@ -3,6 +3,19 @@ import time
 
 
 class Bot:
+    """
+    Callback query pattern: command_name-first_arg-second_arg-(...)
+    Typical: command_name-view_number-list_id-item_id
+
+    List of views:
+    0 - list of lists
+    1 - list view
+    2 - item view
+    3 - user option view
+    4 - list option view
+    5 - item option view
+
+    """
 
     def __default_callback(self, chat, args=None):
         self.__bot_api.send_message(text="Error: callback function not recognized!", chat_id=chat.chat_id)
