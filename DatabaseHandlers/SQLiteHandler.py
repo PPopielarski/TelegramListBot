@@ -4,6 +4,8 @@ import os.path
 import time
 from shutil import copyfile
 
+# TODO implement new database schema: new constructor and new queries.
+
 
 class SQLiteHandler:
 

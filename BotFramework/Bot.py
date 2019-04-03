@@ -1,5 +1,6 @@
 from BotFramework import TelegramBotAPI, Chat
 import time
+import inspect
 
 
 class Bot:
@@ -8,33 +9,102 @@ class Bot:
         self.__bot_api.send_message(text="Error: callback function not recognized!", chat_id=chat.chat_id)
         self.__create_log("Error: callback function not recognized:\n" + str(args))
 
-    def __default_command(self, chat, args=None):
+    def __default_command(self, chat, _args=None):
         self.__bot_api.send_message(text="Command not recognised. Use /help for further assistance.",
                                     chat_id=chat.chat_id)
 
-    def __default_message_response(self, chat, args=None):
+    def __default_message_response(self, chat, _args=None):
         self.__bot_api.send_message(text="Use /help to see list of possible commands.", chat_id=chat.chat_id)
 
     def __init__(self, telegram_api_token, logger=None):
+
+        if logger is not None:
+            fn_cnt = 0
+            for i in inspect.getmembers(logger):
+                if i[0] == 'enter_log' or i[0] == 'clear_log':
+                    fn_cnt = fn_cnt + 1
+                    if fn_cnt == 2:
+                        break
+            if fn_cnt < 2:
+                raise Exception('Logger class do not provide enter_log or clear_log functions.')
+
         self.__logger = logger
         self.__bot_api = TelegramBotAPI.TelegramBotAPI(telegram_api_token)
-        self.chat_dict = {}
-        self.message_handler = {}
-        self.command_handler = {}
-        self.callback_handler = {}
+        self.__message_handler = {}
+        self.__command_handler = {}
+        self.__callback_handler = {}
         self.__last_update_id = 0
+        self.__default_callback = self.__default_callback
+        self.__default_command = self.__default_command
+        self.__default_message_reaction = self.__default_message_response
+
+        self.chat_dict = {}
         self.settings_dict = {}
-        self.default_callback = self.__default_callback
-        self.default_command = self.__default_command
-        self.default_message_reaction = self.__default_message_response
 
     def __create_log(self, log_entry):
         if self.__logger is not None:
             self.__logger.enter_log(log_entry)
 
+    def remove_callback_function(self, name):
+            del self.__callback_handler[name]
+
+    def remove_command_function(self, name):
+            del self.__command_handler[name]
+
+    def remove_message_reaction_function(self, name):
+            del self.__message_handler[name]
+
+    def add_callback_function(self, name, func):
+        assert isinstance(func, function)
+        assert inspect.signature(func) == '(chat, args)'
+        assert isinstance(name, str)
+        if name not in self.__callback_handler:
+            self.__callback_handler[name] = func
+            return True
+        else:
+            raise Exception('Function already exists!')
+
+    def add_command_function(self, name, func):
+        assert isinstance(func, function)
+        assert inspect.signature(func) == '(chat, args)'
+        assert isinstance(name, str)
+        if name not in self.__callback_handler:
+            self.__command_handler[name] = func
+            return True
+        else:
+            raise Exception('Function already exists!')
+
+    def add_message_reaction_function(self, name, func):
+        assert isinstance(func, function)
+        assert inspect.signature(func) == '(chat, args)'
+        assert isinstance(name, str)
+        if name not in self.__callback_handler:
+            self.__message_handler[name] = func
+            return True
+        else:
+            raise Exception('Function already exists!')
+
+    def set_default_callback_response(self, func):
+        assert isinstance(func, function)
+        self.__default_callback = func
+
+    def set_default_command_response(self, func):
+        assert isinstance(func, function)
+        self.__default_command = func
+
+    def set_default_message_response(self, func):
+        assert isinstance(func, function)
+        self.__default_message_reaction = func
+
     def clear_logs(self):
         self.__logger.clear_log()
-            
+
+    def get_updates(self, offset, timeout=100):
+        return self.__bot_api.get_updates(offset, timeout)
+
+    def get_bot_details(self):
+        return self.__bot_api.get_bot_details()
+
     def start(self):
 
         update = self.__bot_api.get_updates(timeout=1, offset=0)
@@ -76,14 +146,14 @@ class Bot:
                     if args[0] is '/':
                             args = args.split(' ', 1)
                             chat.command = None
-                            self.command_handler.get(args[0], self.default_command)(chat, args)
+                            self.__command_handler.get(args[0], self.__default_command)(chat, args)
                     else:
                         # handling messages
-                        self.message_handler.get(chat.command, self.default_message_reaction)(chat, args)
+                        self.__message_handler.get(chat.command, self.__default_message_reaction)(chat, args)
 
                 elif 'callback_query' in update:
                     args = result['callback_query']['data'].split('-')
-                    self.callback_handler.get(args[0], self.default_callback)(chat, args)
+                    self.__callback_handler.get(args[0], self.__default_callback)(chat, args)
 
                 else:
                     self.__create_log('Update not recognized:\n' + str(update))

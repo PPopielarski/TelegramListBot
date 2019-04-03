@@ -1,4 +1,5 @@
 from BotFramework import InlineKeyboard
+from BotFramework import Chat
 
 
 class CommandHandler:

@@ -1,5 +1,8 @@
 import sys
 
+# TODO adjust class for saving into database as a operation for whole keyboard (destructor of the class or method for
+# TODO changing current view of chat)
+
 
 class InlineKeyboard:
 
@@ -8,14 +11,14 @@ class InlineKeyboard:
         resize_keyboard = json_data['resize_keyboard'] if 'resize_keyboard' in json_data else False
         one_time_keyboard = json_data['one_time_keyboard'] if 'one_time_keyboard' in json_data else False
         selective = json_data['selective'] if 'selective' in json_data else False
+        rows_dict = {}
         if 'inline_keyboard' in json_data:
-            rows_dict = {}
             buttons_list_of_lists = json_data['inline_keyboard']
             for list_number in range(len(buttons_list_of_lists)):
                 rows_dict[list_number] = {}
                 for button_number in range(len(buttons_list_of_lists[list_number])):
                     rows_dict[list_number][button_number] = buttons_list_of_lists[list_number][button_number]
-        ik = cls(resize_keyboard, one_time_keyboard, selective)
+        ik = InlineKeyboard(resize_keyboard, one_time_keyboard, selective)
         ik.__rows_dict = rows_dict
         return ik
 

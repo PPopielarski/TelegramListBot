@@ -1,5 +1,6 @@
 import json
 import requests
+from BotFramework import InlineKeyboard
 
 
 class TelegramBotAPI:
@@ -19,9 +20,6 @@ class TelegramBotAPI:
         return self.__send_post_request({"offset": offset, "timeout": timeout, "method": "getUpdates"})
 
     def send_message(self, text, chat_id, reply_markup=None):
-        if reply_markup is not None and type(reply_markup) is not str:
-            reply_markup = reply_markup.get_keyboard_markup()
-        # text = urllib.parse.quote_plus(text)
         request = {"method": "sendMessage", "text": text, "chat_id": chat_id}
         if reply_markup:
             request['reply_markup'] = reply_markup
@@ -40,8 +38,7 @@ class TelegramBotAPI:
         return self.__send_post_request(request)
 
     def edit_message(self, new_text, chat_id, message_id, new_reply_markup=None):
-        request = {"method": "editMessageText", "text": new_text, "chat_id": chat_id,
-                   'message_id': message_id}
+        request = {"method": "editMessageText", "text": new_text, "chat_id": chat_id, 'message_id': message_id}
         if new_reply_markup:
             request['reply_markup'] = new_reply_markup
         return self.__send_post_request(request)
