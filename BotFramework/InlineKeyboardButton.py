@@ -17,3 +17,4 @@ class InlineKeyboardButton:
         self.switch_inline_query = switch_inline_query
         self.switch_inline_query_current_chat = switch_inline_query_current_chat
         self.metadata = metadata
+

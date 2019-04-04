@@ -1,4 +1,4 @@
-from BotFramework.reply_markup import InlineKeyboard
+from BotFramework import InlineKeyboard
 
 
 class CommandHandler:

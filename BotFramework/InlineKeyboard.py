@@ -1,3 +1,4 @@
+from BotFramework import InlineKeyboardButton
 import sys
 
 # TODO adjust class for saving into database as a operation for whole keyboard (destructor of the class or method for
@@ -31,7 +32,35 @@ class InlineKeyboard:
     def __str__(self):
         return self.get_keyboard_markup()
 
-    def add_button(self, text, callback_data, row=None, column=None, url=None):
+    def add_button(self, button: InlineKeyboardButton.InlineKeyboardButton, row: int = None, column: int = None):
+        assert isinstance(button, InlineKeyboardButton.InlineKeyboardButton)
+        assert row is None or isinstance(row, int)
+        assert column is None or isinstance(column, int)
+        if row is None:
+            if len(self.__rows_dict) == 0:
+                row = 0
+            else:
+                row = max(self.__rows_dict) + 1
+
+        if row not in self.__rows_dict:
+            self.__rows_dict[row] = {}
+        elif column in self.__rows_dict[row]:
+            raise Exception('''Button in this position is already set. Use pop_button to remove it or change its 
+                            position.''')
+
+        if column is None:
+            if len(self.__rows_dict[row]):
+                column = 0
+            else:
+                column = max(self.__rows_dict[row]) + 1
+
+        if column in self.__rows_dict[row]:
+            raise Exception(
+                'Button in this position is already set. Use pop_button to remove it or change coordinates.')
+
+
+    def create_button(self, text: str, url: str = None, callback_data: str = None, switch_inline_query: str = None,
+                      switch_inline_query_current_chat: str = None, metadata: dict = None, row=None, column=None):
         """Indexes of rows and columns can contain gaps (e.g. 1, 2, 4) and start from any value."""
         if sys.getsizeof(callback_data) > 64:
             raise Exception('Callback data maximum weight is 64.')
