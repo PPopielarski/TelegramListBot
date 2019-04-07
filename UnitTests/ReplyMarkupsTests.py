@@ -169,14 +169,16 @@ class InlineMarkupsTests(unittest.TestCase):
                                                 "'request_location': True}, {'text': 'Text2', 'request_contact': True" +
                                                 "}], [{'text': 'Text3', 'request_contact': True}]]}")
 
-    def test_InlineKeyboardMarkup_1row2cols(self):
+    def test_ReplyKeyboardMarkup_1row2cols(self):
         rkm = ReplyMarkups.ReplyKeyboardMarkup(resize_keyboard=True)
         rkm.add_button(Buttons.KeyboardButton('Text1', request_location=True), row=1, col=1)
         rkm.add_button(Buttons.KeyboardButton('Text2', True), row=1, col=2)
         rkm.add_button(Buttons.KeyboardButton('Text3', True), row=2, col=1)
-        self.assertEqual(str(rkm.get_markup()), "{'resize_keyboard': True, 'keyboard': [[{'text': 'Text1', 'request_location': True}], [{'text': 'Text2', 'request_contact': True}]]}")
+        self.assertEqual(str(rkm.get_markup()), "{'resize_keyboard': True, 'keyboard': [[{'text': 'Text1', " +
+                                                "'request_location': True}, {'text': 'Text2', 'request_contact': " +
+                                                "True}], [{'text': 'Text3', 'request_contact': True}]]}")
 
-    def test_InlineKeyboardMarkup_pop_button(self):
+    def test_ReplyKeyboardMarkup_pop_button(self):
         rkm = ReplyMarkups.ReplyKeyboardMarkup(resize_keyboard=True)
         rkm.add_button(Buttons.KeyboardButton('Text1', request_location=True), row=1, col=1)
         rkm.add_button(Buttons.KeyboardButton('Text2', True), row=1, col=2)
@@ -186,6 +188,54 @@ class InlineMarkupsTests(unittest.TestCase):
         self.assertEqual(str(rkm.get_markup()), "{'resize_keyboard': True, 'keyboard': [[{'text': 'Text2', " +
                                                 "'request_contact': True}], [{'text': 'Text3', 'request_contact': " +
                                                 "True}]]}")
+
+    def test_ReplyKeyboardMarkup_move_button(self):
+        rkm = ReplyMarkups.ReplyKeyboardMarkup(resize_keyboard=True)
+        rkm.add_button(Buttons.KeyboardButton('Text1', request_location=True), row=1, col=1)
+        rkm.add_button(Buttons.KeyboardButton('Text2', True), row=1, col=2)
+        rkm.add_button(Buttons.KeyboardButton('Text3', True), row=2, col=1)
+        self.assertEqual(str(rkm.get_markup()), "{'resize_keyboard': True, 'keyboard': [[{'text': 'Text1', " +
+                                                "'request_location': True}, {'text': 'Text2', 'request_contact': " +
+                                                "True}], [{'text': 'Text3', 'request_contact': True}]]}")
+
+    def test_ReplyKeyboardMarkup_1argError(self):
+        with self.assertRaises(AssertionError):
+            ReplyMarkups.ReplyKeyboardMarkup(resize_keyboard=1)
+
+    def test_ReplyKeyboardMarkup_2argError(self):
+        with self.assertRaises(AssertionError):
+            ReplyMarkups.ReplyKeyboardMarkup(one_time_keyboard='True')
+
+    def test_ReplyKeyboardMarkup_3argError(self):
+        with self.assertRaises(AssertionError):
+            ReplyMarkups.ReplyKeyboardMarkup(selective=1.0)
+
+    def test_ReplyKeyboardMarkup_twice_the_same_place(self):
+        with self.assertRaises(Exception):
+            rkm = ReplyMarkups.ReplyKeyboardMarkup()
+            rkm.add_button(Buttons.KeyboardButton('Text 1'), col=1, row=1)
+            rkm.add_button(Buttons.KeyboardButton('Text 1'), col=1, row=1)
+
+    def test_InlineKeyboardMarkup(self):
+        ikm = ReplyMarkups.InlineKeyboardMarkup(resize_keyboard=False)
+        ikm.add_button(Buttons.InlineKeyboardButton('Text1', callback_data='cbd'), row=1, col=1)
+        ikm.add_button(Buttons.InlineKeyboardButton('Text2', switch_inline_query='switch_inline_query2'), row=1, col=2)
+        ikm.add_button(Buttons.InlineKeyboardButton('Text3', switch_inline_query_current_chat=
+                                                    'switch_inline_query_current_chat3'), row=1, col=3)
+        button = ikm.pop_button(row=1, col=2)
+        button.set_text('new text')
+        ikm.add_button(button, row=2, col=1)
+        ikm.add_button(Buttons.InlineKeyboardButton('Text1', callback_data='new button'), row=1, col=2)
+        self.assertEqual(str(ikm.get_markup()), "{'inline_keyboard': [[{'text': 'Text1', 'callback_data': 'cbd'}, " +
+                                                "{'text': 'Text1', 'callback_data': 'new button'}, {'text': 'Text3', " +
+                                                "'switch_inline_query_current_chat': 'switch_inline_query_current_" +
+                                                "chat3'}], [{'text': 'new text', 'switch_inline_query': " +
+                                                "'switch_inline_query2'}]]}")
+
+    def test_InlineKeyboardMarkup_wrong_button(self):
+        with self.assertRaises(AssertionError):
+            ikm = ReplyMarkups.InlineKeyboardMarkup()
+            ikm.add_button('button', row=1, col=1)
 
 
 if __name__ == '__main__':

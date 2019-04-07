@@ -22,6 +22,9 @@ class _ReplyMarkup(object):
         else:
             return {}
 
+    def __str__(self):
+        return str(self.get_markup())
+
 
 class ReplyKeyboardRemove(_ReplyMarkup):
 
@@ -100,15 +103,6 @@ class _KeyboardMarkup(_ReplyMarkup):
             return button
         else:
             return None
-
-    def move_button(self, row: int, col: int, new_row: int, new_col: int):
-        if new_row in self.__rows_dict and new_col in self.__rows_dict[row]:
-            raise Exception('Button at this position is already set.')
-        if row not in self.__rows_dict or col not in self.__rows_dict[row]:
-            raise Exception("Button does not not exist.")
-        if new_row not in self.__rows_dict:
-            self.__rows_dict[new_row] = {}
-        self.__rows_dict[new_row][new_col] = self.pop_button(row, col)
 
     def get_markup(self):
         d = super().get_markup()

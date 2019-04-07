@@ -1,4 +1,4 @@
-from BotFramework import TelegramBotAPI, Chat
+from BotFramework import TelegramBotAPI, Chat, Txtlogger
 import time
 import inspect
 
@@ -29,7 +29,7 @@ class Bot:
     def __default_message_response(self, chat, _):
         self.__bot_api.send_message(text="Use /help to see list of possible commands.", chat_id=chat.chat_id)
 
-    def __init__(self, telegram_api_token: str, chat_life_time: int, logger: object = None):
+    def __init__(self, telegram_api_token: str, chat_life_time: int = 600, logger: Txtlogger.Txtlogger = None):
 
         if logger is not None:
             fn_cnt = 0
@@ -161,6 +161,7 @@ class Bot:
                             args = args.split(' ', 1)
                             chat.command = None
                             self.__command_handler.get(args[0], self.__default_command)(chat, args)
+
                     else:
                         # handling messages
                         self.__message_handler.get(chat.command, self.__default_message_reaction)(chat, args)
