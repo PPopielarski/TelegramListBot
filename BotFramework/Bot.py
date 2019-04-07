@@ -18,10 +18,6 @@ class Bot:
 
     """
 
-    __slots__ = '__logger', '__bot_api', '__message_handler', '__command_handler', '__callback_handler', \
-                '__last_update_id', '__default_callback', '__default_command', '__default_message_reaction', \
-                '__chat_dict', '__chat_life_time'
-
     def __default_callback(self, chat, __args):
         self.__bot_api.send_message(text="Error: callback function not recognized!", chat_id=chat.chat_id)
         self.__create_log("Error: callback function not recognized:\n" + str(__args))

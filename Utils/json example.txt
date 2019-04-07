@@ -4,3 +4,5 @@
 
 {"ok":true,"result":[{"update_id":875961057,
 "message":{"message_id":722,"from":{"id":709434058,"is_bot":false,"first_name":"Harold Angel","language_code":"pl"},"chat":{"id":709434058,"first_name":"Harold Angel","type":"private"},"date":1553969886,"text":"/tygrys","entities":[{"offset":0,"length":7,"type":"bot_command"}]}}]}
+
+{'resize_keyboard': True, 'keyboard': [[{'text': 'Text1', 'request_location': True}], [{'text': 'Text2', 'request_contact': True}]]}

@@ -1,5 +1,6 @@
 import json
 import requests
+from BotFramework import ReplyMarkups
 
 
 class TelegramBotAPI:
@@ -20,9 +21,10 @@ class TelegramBotAPI:
     def get_updates(self, offset, timeout=100):
         return self.__send_post_request({"offset": offset, "timeout": timeout, "method": "getUpdates"})
 
-    def send_message(self, chat_id, text: str, parse_mode: str = None,
-                     disable_web_page_preview: bool = False, disable_notification: bool = False,
-                     reply_to_message_id: int = None, reply_markup=None):
+    def send_message(self, chat_id, text: str, parse_mode: str = None, disable_web_page_preview: bool = False,
+                     disable_notification: bool = False, reply_to_message_id: int = None, reply_markup=None):
+        if issubclass(type(reply_markup), ReplyMarkups._KeyboardMarkup):
+            reply_markup = reply_markup.get_markup()
         request = {"method": "sendMessage", "text": text, "chat_id": chat_id}
         if disable_web_page_preview:
             request['disable_web_page_preview'] = disable_web_page_preview

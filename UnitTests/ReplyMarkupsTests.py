@@ -1,5 +1,5 @@
 import unittest
-from BotFramework import Buttons, InlineMarkups
+from BotFramework import Buttons, ReplyMarkups
 
 
 class InlineKeyboardButtonsTest(unittest.TestCase):
@@ -132,25 +132,60 @@ class KeyboardButtonsTest(unittest.TestCase):
 
 class InlineMarkupsTests(unittest.TestCase):
 
-    def test_reply_keyboard_remove(self):
-        rkr = InlineMarkups.ReplyKeyboardRemove()
-        self.assertEqual(rkr.get_markup(), {'remove_keyboard': True})
-
     def test_reply_keyboard_remove_get_reply_markup(self):
-        rkr = InlineMarkups.ReplyKeyboardRemove(True)
-        self.assertEqual(rkr.get_markup_string(), str({'selective': True, 'remove_keyboard': True}))
-
-    def test_ForceReply(self):
-        fr = InlineMarkups.ForceReply(True)
-        self.assertEqual(fr.get_markup(), {'force_reply': True, 'selective': True})
+        rkr = ReplyMarkups.ReplyKeyboardRemove(True)
+        self.assertEqual(rkr.get_markup(), {'selective': True, 'remove_keyboard': True})
 
     def test_ForceReply_get_reply_markup(self):
-        fr = InlineMarkups.ForceReply()
-        self.assertEqual(fr.get_markup_string(), str({'force_reply': True}))
+        fr = ReplyMarkups.ForceReply()
+        self.assertEqual(fr.get_markup(), {'force_reply': True})
 
     def test_empty_ReplyKeyboardMarkup(self):
-        rkm = InlineMarkups.ReplyKeyboardMarkup(resize_keyboard=True)
-        self.assertEqual(rkm.get_markup_string(), str({'resize_keyboard': True, 'keyboard': []}))
+        rkm = ReplyMarkups.ReplyKeyboardMarkup(resize_keyboard=True)
+        self.assertEqual(rkm.get_markup(), {'resize_keyboard': True, 'keyboard': []})
+
+    def test_ReplyKeyboardMarkup(self):
+        rkm = ReplyMarkups.ReplyKeyboardMarkup(resize_keyboard=True)
+        rkm.add_button(Buttons.KeyboardButton('Text1', request_location=True), row=1, col=1)
+        rkm.add_button(Buttons.KeyboardButton('Text2', True), row=2, col=1)
+        self.assertEqual(str(rkm.get_markup()), "{'resize_keyboard': True, 'keyboard': [[{'text': 'Text1', " +
+                                                "'request_location': True}], [{'text': 'Text2', 'request_contact': " +
+                                                "True}]]}")
+
+    def test_ReplyKeyboardMarkup_2cols(self):
+        rkm = ReplyMarkups.ReplyKeyboardMarkup(resize_keyboard=True)
+        rkm.add_button(Buttons.KeyboardButton('Text1', request_location=True), row=1, col=1)
+        rkm.add_button(Buttons.KeyboardButton('Text2', True), row=2, col=1)
+        self.assertEqual(str(rkm.get_markup()), "{'resize_keyboard': True, 'keyboard': [[{'text': 'Text1', " +
+                                                "'request_location': True}], [{'text': 'Text2', " +
+                                                "'request_contact': True}]]}")
+
+    def test_ReplyKeyboardMarkup_1row2cols(self):
+        rkm = ReplyMarkups.ReplyKeyboardMarkup(resize_keyboard=True)
+        rkm.add_button(Buttons.KeyboardButton('Text1', request_location=True), row=1, col=1)
+        rkm.add_button(Buttons.KeyboardButton('Text2', True), row=1, col=2)
+        rkm.add_button(Buttons.KeyboardButton('Text3', True), row=2, col=2)
+        self.assertEqual(str(rkm.get_markup()), "{'resize_keyboard': True, 'keyboard': [[{'text': 'Text1', " +
+                                                "'request_location': True}, {'text': 'Text2', 'request_contact': True" +
+                                                "}], [{'text': 'Text3', 'request_contact': True}]]}")
+
+    def test_InlineKeyboardMarkup_1row2cols(self):
+        rkm = ReplyMarkups.ReplyKeyboardMarkup(resize_keyboard=True)
+        rkm.add_button(Buttons.KeyboardButton('Text1', request_location=True), row=1, col=1)
+        rkm.add_button(Buttons.KeyboardButton('Text2', True), row=1, col=2)
+        rkm.add_button(Buttons.KeyboardButton('Text3', True), row=2, col=1)
+        self.assertEqual(str(rkm.get_markup()), "{'resize_keyboard': True, 'keyboard': [[{'text': 'Text1', 'request_location': True}], [{'text': 'Text2', 'request_contact': True}]]}")
+
+    def test_InlineKeyboardMarkup_pop_button(self):
+        rkm = ReplyMarkups.ReplyKeyboardMarkup(resize_keyboard=True)
+        rkm.add_button(Buttons.KeyboardButton('Text1', request_location=True), row=1, col=1)
+        rkm.add_button(Buttons.KeyboardButton('Text2', True), row=1, col=2)
+        rkm.add_button(Buttons.KeyboardButton('Text3', True), row=2, col=1)
+        button = rkm.pop_button(row=1, col=1)
+        self.assertEqual(str(button.get_markup()), "{'text': 'Text1', 'request_location': True}")
+        self.assertEqual(str(rkm.get_markup()), "{'resize_keyboard': True, 'keyboard': [[{'text': 'Text2', " +
+                                                "'request_contact': True}], [{'text': 'Text3', 'request_contact': " +
+                                                "True}]]}")
 
 
 if __name__ == '__main__':

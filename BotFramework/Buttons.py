@@ -17,9 +17,6 @@ class _AbstractKeyboardButton:
     def get_markup(self):
         return {'text': self.__text}
 
-    def get_markup_string(self):
-        return str(self.get_markup())
-
 
 class InlineKeyboardButton(_AbstractKeyboardButton):
 

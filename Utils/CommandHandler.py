@@ -1,4 +1,4 @@
-from BotFramework import InlineMarkups
+from BotFramework import ReplyMarkups
 
 
 class CommandHandler:
@@ -36,7 +36,7 @@ class CommandHandler:
         else:
             tuple_of_tuples = self.db.get_list_of_lists(self.chat_dict[chat_id].chat_id, deleted=False)
 
-        ik = InlineMarkups.InlineKeyboard()
+        ik = ReplyMarkups.InlineKeyboard()
 
         for tup in tuple_of_tuples:
             ik.add_button(text=str(tup[2]) + '. ' + str(tup[1]), callback_data='show_list-' + str(tup[0]), column=0)

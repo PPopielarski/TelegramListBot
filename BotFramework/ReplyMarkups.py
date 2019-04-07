@@ -1,7 +1,7 @@
 from BotFramework import Buttons
 
 
-class _AbstractReplyMarkup(object):
+class _ReplyMarkup(object):
 
     __slots__ = '__selective'
 
@@ -22,14 +22,11 @@ class _AbstractReplyMarkup(object):
         else:
             return {}
 
-    def get_markup_string(self):
-        return str(self.get_markup())
 
-
-class ReplyKeyboardRemove(_AbstractReplyMarkup):
+class ReplyKeyboardRemove(_ReplyMarkup):
 
     def __init__(self, selective: bool = False):
-        _AbstractReplyMarkup.__init__(self, selective)
+        _ReplyMarkup.__init__(self, selective)
 
     def get_markup(self):
         d = super().get_markup()
@@ -37,10 +34,10 @@ class ReplyKeyboardRemove(_AbstractReplyMarkup):
         return d
 
 
-class ForceReply(_AbstractReplyMarkup):
+class ForceReply(_ReplyMarkup):
 
     def __init__(self, selective: bool = False):
-        _AbstractReplyMarkup.__init__(self, selective)
+        _ReplyMarkup.__init__(self, selective)
 
     def get_markup(self):
         d = super().get_markup()
@@ -48,18 +45,18 @@ class ForceReply(_AbstractReplyMarkup):
         return d
 
 
-class _KeyboardMarkup(_AbstractReplyMarkup):
+class _KeyboardMarkup(_ReplyMarkup):
 
-    __slots__ = '__resize_keyboard', '__one_time_keyboard', '_rows_dict'
+    __slots__ = '__resize_keyboard', '__one_time_keyboard', '__rows_dict'
 
     def __init__(self, resize_keyboard: bool = True, one_time_keyboard: bool = False, selective: bool = False):
         assert isinstance(resize_keyboard, bool), 'Argument resize_keyboard must be boolean type.'
         assert isinstance(one_time_keyboard, bool), 'Argument resize_keyboard must be boolean type.'
         assert isinstance(selective, bool), 'Argument resize_keyboard must be boolean type.'
-        _AbstractReplyMarkup.__init__(self, selective)
+        _ReplyMarkup.__init__(self, selective)
         self.__resize_keyboard = resize_keyboard
         self.__one_time_keyboard = one_time_keyboard
-        self._rows_dict = {}
+        self.__rows_dict = {}
 
     def set_resize_keyboard(self, value: bool):
         assert isinstance(value, bool), 'Argument value must be boolean type.'
@@ -75,57 +72,43 @@ class _KeyboardMarkup(_AbstractReplyMarkup):
     def is_one_time_keyboard(self):
         return self.__one_time_keyboard
 
-    def get_keyboard_list(self):
+    def _get_keyboard_list(self):
         buttons_list_of_lists = []
-        for row_number in sorted(self._rows_dict):
+        for row_number in sorted(self.__rows_dict):
             buttons_list = []
-            for col_number in sorted(self._rows_dict[row_number]):
-                buttons_list.append(self._rows_dict[row_number][col_number].get_as_string())
+            for col_number in sorted(self.__rows_dict[row_number]):
+                buttons_list.append(self.__rows_dict[row_number][col_number].get_markup())
             buttons_list_of_lists.append(buttons_list)
         return buttons_list_of_lists
 
-    def add_button(self, button, row: int = None, column: int = None):
-        assert row is None or isinstance(row, int), 'Argument row must be int or None type'
-        assert column is None or isinstance(column, int), 'Argument column must be int or None type'
-
-        if row is None:
-            if len(self._rows_dict) == 0:
-                row = 0
-            else:
-                row = max(self._rows_dict) + 1
-
-        if row not in self._rows_dict:
-            self._rows_dict[row] = {}
-        elif column in self._rows_dict[row]:
+    def add_button(self, button, row: int, col: int):
+        assert isinstance(row, int), 'Argument row must be int.'
+        assert isinstance(col, int), 'Argument col must be int.'
+        if row not in self.__rows_dict:
+            self.__rows_dict[row] = {}
+        elif col in self.__rows_dict[row]:
             raise Exception('''Button in this position is already set. Use pop_button to remove it or change its 
                             position.''')
+        self.__rows_dict[row][col] = button
 
-        if column is None:
-            if len(self._rows_dict[row]) == 0:
-                column = 0
-            else:
-                column = max(self._rows_dict[row]) + 1
-
-        if column in self._rows_dict[row]:
-            raise Exception(
-                'Button in this position is already set. Use pop_button to remove it or change coordinates.')
-
-        self._rows_dict[row][column] = button
-
-    def pop_buttons(self, row: int = None, column: int = None):
-        """Removes and returns button from position. Returns none if there was no button on specified position.
-        If column or row is not specified it returns list of buttons from row or column."""
-        if row is not None and column is not None:
-            if row in self._rows_dict and column in self._rows_dict[row]:
-                return self._rows_dict[row].pop(column)
-            else:
-                return None
-        elif row in self._rows_dict:
-            return self._rows_dict.pop(row)
+    def pop_button(self, row: int, col: int):
+        """Removes and returns button from position. Returns None if there was no button on specified position."""
+        if row in self.__rows_dict and col in self.__rows_dict[row]:
+            button = self.__rows_dict[row].pop(col)
+            if len(self.__rows_dict[row]) == 0:
+                self.__rows_dict.pop(row)
+            return button
         else:
-            col = {}
-            for i in self._rows_dict:
-                col[i] = self._rows_dict.pop(column)
+            return None
+
+    def move_button(self, row: int, col: int, new_row: int, new_col: int):
+        if new_row in self.__rows_dict and new_col in self.__rows_dict[row]:
+            raise Exception('Button at this position is already set.')
+        if row not in self.__rows_dict or col not in self.__rows_dict[row]:
+            raise Exception("Button does not not exist.")
+        if new_row not in self.__rows_dict:
+            self.__rows_dict[new_row] = {}
+        self.__rows_dict[new_row][new_col] = self.pop_button(row, col)
 
     def get_markup(self):
         d = super().get_markup()
@@ -142,13 +125,13 @@ class InlineKeyboardMarkup(_KeyboardMarkup):
         _KeyboardMarkup.__init__(self, resize_keyboard=resize_keyboard, one_time_keyboard=one_time_keyboard,
                                  selective=selective)
 
-    def add_button(self, button: Buttons.InlineKeyboardButton, row: int = None, column: int = None):
+    def add_button(self, button: Buttons.InlineKeyboardButton, row: int = None, col: int = None):
         assert isinstance(button, Buttons.InlineKeyboardButton), 'Argument button must be InlineKeyboardButton.'
-        super().add_button(button, row, column)
+        super().add_button(button, row, col)
 
     def get_markup(self):
         d = super().get_markup()
-        d['inline_keyboard'] = super().get_keyboard_list()
+        d['inline_keyboard'] = super()._get_keyboard_list()
         return d
 
 
@@ -158,11 +141,11 @@ class ReplyKeyboardMarkup(_KeyboardMarkup):
         _KeyboardMarkup.__init__(self, resize_keyboard=resize_keyboard, one_time_keyboard=one_time_keyboard,
                                  selective=selective)
 
-    def add_button(self, button: Buttons.KeyboardButton, row: int = None, column: int = None):
+    def add_button(self, button: Buttons.KeyboardButton, row: int = None, col: int = None):
         assert isinstance(button, Buttons.KeyboardButton), 'Argument button must be KeyboardButton.'
-        super().add_button(button, row, column)
+        super().add_button(button, row, col)
 
     def get_markup(self):
         d = super().get_markup()
-        d['keyboard'] = super().get_keyboard_list()
+        d['keyboard'] = super()._get_keyboard_list()
         return d
