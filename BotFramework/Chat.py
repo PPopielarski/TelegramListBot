@@ -1,7 +1,10 @@
-from BotFramework import InlineKeyboard
+import time
 
 
 class Chat:
+
+    __slots__ = '__bot_api', '__current_inline_keyboard', '__last_message_id', 'chat_id', 'current_view', \
+                'current_command', 'last_usage_time'
 
     def __init__(self, chat_id, bot_api):
         self.__bot_api = bot_api
@@ -11,8 +14,7 @@ class Chat:
         self.chat_id = chat_id
         self.current_view = None
         self.current_command = None
-        self.arguments_dict = {}
-        self.settings_dict = {}
+        self.last_usage_time = time.time()
 
     def respond(self, text, reply_markup=None):
         # Last_message_id is set to None if last message on chat is from user.
@@ -27,14 +29,12 @@ class Chat:
             return self.send_message(text, reply_markup)
 
     def send_message(self, text, reply_markup=None):
-        assert isinstance(reply_markup, InlineKeyboard.InlineKeyboard)
         self.__current_inline_keyboard = reply_markup
         message = self.__bot_api.send_message(text, self.chat_id, reply_markup.get_keyboard_markup())
         self.__last_message_id = message['result']['message_id']
         return message
 
     def edit_message(self, new_text, message_id, new_reply_markup=None):
-        assert isinstance(new_reply_markup, InlineKeyboard.InlineKeyboard)
         self.__current_inline_keyboard = new_reply_markup
         return self.__bot_api.edit_message(new_text=new_text, chat_id=self.chat_id, message_id=message_id,
                                            new_reply_markup=new_reply_markup.get_keyboard_markup())

@@ -1,1 +1,1 @@
-from BotFramework import TelegramBotAPI, InlineKeyboard, InlineKeyboardButton
+from BotFramework import TelegramBotAPI, InlineMarkups, Buttons

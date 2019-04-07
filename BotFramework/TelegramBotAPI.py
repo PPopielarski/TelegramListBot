@@ -4,6 +4,8 @@ import requests
 
 class TelegramBotAPI:
 
+    __slots__ = '__url'
+
     def __init__(self, token):
         self.__url = 'https://api.telegram.org/bot' + token + '/'
 

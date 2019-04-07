@@ -18,18 +18,22 @@ class Bot:
 
     """
 
-    def __default_callback(self, chat, args=None):
-        self.__bot_api.send_message(text="Error: callback function not recognized!", chat_id=chat.chat_id)
-        self.__create_log("Error: callback function not recognized:\n" + str(args))
+    __slots__ = '__logger', '__bot_api', '__message_handler', '__command_handler', '__callback_handler', \
+                '__last_update_id', '__default_callback', '__default_command', '__default_message_reaction', \
+                '__chat_dict', '__chat_life_time'
 
-    def __default_command(self, chat, _args=None):
+    def __default_callback(self, chat, __args):
+        self.__bot_api.send_message(text="Error: callback function not recognized!", chat_id=chat.chat_id)
+        self.__create_log("Error: callback function not recognized:\n" + str(__args))
+
+    def __default_command(self, chat, _):
         self.__bot_api.send_message(text="Command not recognised. Use /help for further assistance.",
                                     chat_id=chat.chat_id)
 
-    def __default_message_response(self, chat, _args=None):
+    def __default_message_response(self, chat, _):
         self.__bot_api.send_message(text="Use /help to see list of possible commands.", chat_id=chat.chat_id)
 
-    def __init__(self, telegram_api_token, logger=None):
+    def __init__(self, telegram_api_token: str, chat_life_time: int, logger: object = None):
 
         if logger is not None:
             fn_cnt = 0
@@ -50,69 +54,68 @@ class Bot:
         self.__default_callback = self.__default_callback
         self.__default_command = self.__default_command
         self.__default_message_reaction = self.__default_message_response
-
-        self.chat_dict = {}
-        self.settings_dict = {}
+        self.__chat_dict = {}
+        self.__chat_life_time = chat_life_time
 
     def __create_log(self, log_entry):
         if self.__logger is not None:
             self.__logger.enter_log(log_entry)
 
-    def remove_callback_function(self, name):
+    def remove_callback_function(self, name: str):
             del self.__callback_handler[name]
 
-    def remove_command_function(self, name):
+    def remove_command_function(self, name: str):
             del self.__command_handler[name]
 
-    def remove_message_reaction_function(self, name):
+    def remove_message_reaction_function(self, name: str):
             del self.__message_handler[name]
 
-    def add_callback_function(self, name, func):
-        assert isinstance(func, function)
+    def add_callback_function(self, name: str, func):
+        assert isinstance(func, func)
         assert inspect.signature(func) == '(chat, args)'
         assert isinstance(name, str)
         if name not in self.__callback_handler:
             self.__callback_handler[name] = func
             return True
         else:
-            raise Exception('Function already exists!')
+            raise Exception('Name already in use!')
 
-    def add_command_function(self, name, func):
-        assert isinstance(func, function)
+    def add_command_function(self, name: str, func):
+        assert isinstance(func, func)
         assert inspect.signature(func) == '(chat, args)'
         assert isinstance(name, str)
         if name not in self.__callback_handler:
             self.__command_handler[name] = func
             return True
         else:
-            raise Exception('Function already exists!')
+            raise Exception('Name already in use!')
 
-    def add_message_reaction_function(self, name, func):
-        assert isinstance(func, function)
+    def add_message_reaction_function(self, name: str, func):
+        assert hasattr(func, '__call__'), "Argument func must be function with arguments (chat, args)."
         assert inspect.signature(func) == '(chat, args)'
         assert isinstance(name, str)
         if name not in self.__callback_handler:
             self.__message_handler[name] = func
             return True
         else:
-            raise Exception('Function already exists!')
+            raise Exception('Name already in use!')
 
     def set_default_callback_response(self, func):
-        assert isinstance(func, function)
+        assert hasattr(func, '__call__')
         self.__default_callback = func
 
     def set_default_command_response(self, func):
-        assert isinstance(func, function)
+        assert hasattr(func, '__call__')
         self.__default_command = func
 
     def set_default_message_response(self, func):
-        assert isinstance(func, function)
+        assert hasattr(func, '__call__')
         self.__default_message_reaction = func
 
     def clear_logs(self):
         self.__logger.clear_log()
 
-    def get_updates(self, offset, timeout=100):
+    def get_updates(self, offset: int, timeout: int = 100):
         return self.__bot_api.get_updates(offset, timeout)
 
     def get_bot_details(self):
@@ -143,11 +146,13 @@ class Bot:
                     continue
 
                 # creating chat instance if necessary
-                if chat_id not in self.chat_dict:
-                    self.chat_dict[chat_id] = Chat.Chat(chat_id, self.__bot_api)
-                    self.chat_dict[chat_id].state = 0
-
-                chat = self.chat_dict[chat_id]
+                if chat_id not in self.__chat_dict:
+                    chat = Chat.Chat(chat_id, self.__bot_api)
+                    self.__chat_dict[chat_id] = chat
+                    self.__chat_dict[chat_id].state = 0
+                else:
+                    chat = self.__chat_dict[chat_id]
+                    chat.last_usage_time = time.time()
 
                 # selecting appropriate handler
                 if "message" in update:

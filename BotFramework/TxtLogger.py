@@ -5,7 +5,9 @@ import datetime
 
 class TxtLogger:
 
-    def __init__(self, path, clear_log=False):
+    def __init__(self, path: str, clear_log: bool = False):
+        assert isinstance(path, str), 'Argument str must be a file path in quotation marks.'
+        assert isinstance(clear_log, bool), 'Argument str must be boolean.'
         """Creates database log file."""
         self.path = path
         if clear_log:

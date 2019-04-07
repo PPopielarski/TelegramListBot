@@ -1,7 +1,8 @@
+from BotFramework import InlineMarkups
 
-class Zwierze(object):
-    pass
+rkm = InlineMarkups.ReplyKeyboardMarkup(resize_keyboard=True)
 
+print(rkm.get_markup())
 
-class Lew(Zwierze):
-    pass
+# {'keyboard': []}
+# {'keyboard': []}
