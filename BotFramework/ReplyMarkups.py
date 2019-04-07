@@ -87,6 +87,7 @@ class _KeyboardMarkup(_ReplyMarkup):
             buttons_list_of_lists.append(buttons_list)
         return buttons_list_of_lists
 
+    # TODO add generic hint for button, add return hint for all functions
     def add_button(self, button, row: int, col: int):
         assert isinstance(row, int), 'Argument row must be int.'
         assert isinstance(col, int), 'Argument col must be int.'
