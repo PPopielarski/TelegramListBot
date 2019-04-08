@@ -25,12 +25,12 @@ class TxtLogger:
                 self.log_file = open(path, 'a')
                 self.enter_log("log file created")
 
-    def clear_logs(self):
+    def clear_logs(self) -> None:
         os.remove(self.path)
         self.log_file = open(self.path, 'w')
         self.enter_log("Log file cleared.")
 
-    def enter_log(self, s):
+    def enter_log(self, s) -> None:
         """Creates log entry with current timestamp."""
         if self.log_file.closed:
             self.log_file = open(self.path, 'a')

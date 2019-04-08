@@ -16,7 +16,7 @@ class Chat:
         self.current_command = None
         self.last_usage_time = time.time()
 
-    def respond(self, text, reply_markup=None):
+    def respond(self, text, reply_markup=None) -> dict:
         # Last_message_id is set to None if last message on chat is from user.
         if self.__last_message_id is not None:
             response = self.edit_message(text, self.chat_id, reply_markup)
@@ -28,18 +28,18 @@ class Chat:
         else:
             return self.send_message(text, reply_markup)
 
-    def send_message(self, text, reply_markup=None):
+    def send_message(self, text, reply_markup=None) -> dict:
         self.__current_inline_keyboard = reply_markup
         message = self.__bot_api.send_message(text, self.chat_id, reply_markup.get_keyboard_markup())
         self.__last_message_id = message['result']['message_id']
         return message
 
-    def edit_message(self, new_text, message_id, new_reply_markup=None):
+    def edit_message(self, new_text, message_id, new_reply_markup=None) -> dict:
         self.__current_inline_keyboard = new_reply_markup
         return self.__bot_api.edit_message(new_text=new_text, chat_id=self.chat_id, message_id=message_id,
                                            new_reply_markup=new_reply_markup.get_keyboard_markup())
 
-    def send_chat_action(self, action):
+    def send_chat_action(self, action) -> dict:
         """Possible actions: 'typing', 'upload_photo', 'upload_video', 'record_video', 'upload_audio', 'record_audio',
                           'upload_document', 'find_location', 'upload_video_note', 'record_video_note'"""
         return self.__bot_api.send_chat_action(chat_id=self.chat_id, action=action)

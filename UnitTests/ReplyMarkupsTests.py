@@ -169,15 +169,6 @@ class InlineMarkupsTests(unittest.TestCase):
                                                 "'request_location': True}, {'text': 'Text2', 'request_contact': True" +
                                                 "}], [{'text': 'Text3', 'request_contact': True}]]}")
 
-    def test_ReplyKeyboardMarkup_1row2cols(self):
-        rkm = ReplyMarkups.ReplyKeyboardMarkup(resize_keyboard=True)
-        rkm.add_button(Buttons.KeyboardButton('Text1', request_location=True), row=1, col=1)
-        rkm.add_button(Buttons.KeyboardButton('Text2', True), row=1, col=2)
-        rkm.add_button(Buttons.KeyboardButton('Text3', True), row=2, col=1)
-        self.assertEqual(str(rkm.get_markup()), "{'resize_keyboard': True, 'keyboard': [[{'text': 'Text1', " +
-                                                "'request_location': True}, {'text': 'Text2', 'request_contact': " +
-                                                "True}], [{'text': 'Text3', 'request_contact': True}]]}")
-
     def test_ReplyKeyboardMarkup_pop_button(self):
         rkm = ReplyMarkups.ReplyKeyboardMarkup(resize_keyboard=True)
         rkm.add_button(Buttons.KeyboardButton('Text1', request_location=True), row=1, col=1)
@@ -215,6 +206,15 @@ class InlineMarkupsTests(unittest.TestCase):
             rkm = ReplyMarkups.ReplyKeyboardMarkup()
             rkm.add_button(Buttons.KeyboardButton('Text 1'), col=1, row=1)
             rkm.add_button(Buttons.KeyboardButton('Text 1'), col=1, row=1)
+
+    def test_ReplyKeyboardMarkup_get_button(self):
+            rkm = ReplyMarkups.ReplyKeyboardMarkup()
+            rkm.add_button(Buttons.KeyboardButton('Text 1'), col=1, row=1)
+            rkm.add_button(Buttons.KeyboardButton('Text 1'), col=1, row=2)
+            button = rkm.get_button(col=1, row=2)
+            self.assertEqual(button.get_markup(), {'text': 'Text 1'})
+            self.assertEqual(rkm.get_markup(), {'resize_keyboard': True, 'keyboard': [[{'text': 'Text 1'}],
+                                                [{'text': 'Text 1'}]]})
 
     def test_InlineKeyboardMarkup(self):
         ikm = ReplyMarkups.InlineKeyboardMarkup(resize_keyboard=False)

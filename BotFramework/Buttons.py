@@ -1,10 +1,10 @@
 import sys
+from abc import ABC, abstractmethod
 
-#  TODO Abstract Base Classes
 
+class _AbstractKeyboardButton(ABC):
 
-class _AbstractKeyboardButton:
-
+    @abstractmethod
     def __init__(self, text: str):
         assert isinstance(text, str), 'Argument text is not a string.'
         self.__text = text
@@ -16,6 +16,7 @@ class _AbstractKeyboardButton:
     def get_text(self):
         return self.__text
 
+    @abstractmethod
     def get_markup(self):
         return {'text': self.__text}
 
