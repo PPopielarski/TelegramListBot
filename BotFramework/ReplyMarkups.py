@@ -140,10 +140,10 @@ class InlineKeyboardMarkup(_KeyboardMarkup):
         d['inline_keyboard'] = super()._get_keyboard_list()
         return d
 
-    def get_button(self, row: int, col: int) -> typing.Union(Buttons.InlineKeyboardButton, None):
+    def get_button(self, row: int, col: int) -> typing.Union[Buttons.InlineKeyboardButton, None]:
         return super()._get_button(row, col)
 
-    def pop_button(self, row: int, col: int) -> typing.Union(Buttons.InlineKeyboardButton, None):
+    def pop_button(self, row: int, col: int) -> typing.Union[Buttons.InlineKeyboardButton, None]:
         return super()._pop_button(row, col)
 
 
@@ -162,8 +162,8 @@ class ReplyKeyboardMarkup(_KeyboardMarkup):
         d['keyboard'] = super()._get_keyboard_list()
         return d
 
-    def get_button(self, row: int, col: int) -> typing.Union(Buttons.KeyboardButton, None):
+    def get_button(self, row: int, col: int) -> typing.Union[Buttons.KeyboardButton, None]:
         return super()._get_button(row, col)
 
-    def pop_button(self, row: int, col: int) -> typing.Union(Buttons.KeyboardButton, None):
+    def pop_button(self, row: int, col: int) -> typing.Union[Buttons.KeyboardButton, None]:
         return super()._pop_button(row, col)

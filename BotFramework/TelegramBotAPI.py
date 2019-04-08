@@ -21,8 +21,8 @@ class TelegramBotAPI:
     def get_me(self) -> dict:
         return self.__send_post_request({"method": "getme"})
 
-    def get_updates(self, offset: int, timeout: int = 100) -> dict:
-        assert isinstance(offset, int)
+    def get_updates(self, offset: int = None, timeout: int = 100) -> dict:
+        assert offset is None or isinstance(offset, int)
         assert isinstance(timeout, int)
         return self.__send_post_request({"offset": offset, "timeout": timeout, "method": "getUpdates"})
 
@@ -70,9 +70,9 @@ class TelegramBotAPI:
             'Chat_id must be chat_id or username starting with @'
         assert isinstance(message_id, int)
         assert isinstance(new_text, str)
-        assert isinstance(parse_mode, str) or parse_mode in None
+        assert parse_mode is None or isinstance(parse_mode, str)
         assert isinstance(disable_web_page_preview, bool)
-        assert isinstance(new_reply_markup, ReplyMarkups.InlineKeyboardMarkup) or new_reply_markup is None
+        assert new_reply_markup is None or isinstance(new_reply_markup, ReplyMarkups.InlineKeyboardMarkup)
         request = {"method": "editMessageText", "text": new_text, "chat_id": chat_id, 'message_id': message_id}
         if new_reply_markup:
             request['reply_markup'] = new_reply_markup
@@ -106,7 +106,7 @@ class TelegramBotAPI:
             'Chat_id must be chat_id or username starting with @'
         assert isinstance(message_id, int)
         assert isinstance(new_caption, str)
-        assert isinstance(parse_mode, str) or parse_mode in None
+        assert parse_mode is None or isinstance(parse_mode, str)
         assert isinstance(new_reply_markup, ReplyMarkups.InlineKeyboardMarkup) or new_reply_markup is None
         request = {"method": "editMessageCaption", "caption": new_caption, "chat_id": chat_id, 'message_id': message_id}
         if new_reply_markup:
@@ -588,10 +588,10 @@ class TelegramBotAPI:
     def answer_callback_query(self, callback_query_id: str, text: str = None, show_alert: bool = False, url: str = None,
                               cache_time: int = None):
         assert isinstance(callback_query_id, str)
-        assert text in None or (isinstance(text, str) and len(text) <= 200)
+        assert text is None or (isinstance(text, str) and len(text) <= 200)
         assert isinstance(show_alert, bool)
-        assert url in None or isinstance(url, str)
-        assert cache_time in None or isinstance(cache_time, int)
+        assert url is None or isinstance(url, str)
+        assert cache_time is None or isinstance(cache_time, int)
         request = {"method": "answerCallbackQuery", 'callback_query_id': callback_query_id}
         if text:
             request['text'] = text
@@ -602,12 +602,3 @@ class TelegramBotAPI:
         if cache_time:
             request['cache_time'] = cache_time
         return self.__send_post_request(request)
-
-
-
-
-
-
-
-
-

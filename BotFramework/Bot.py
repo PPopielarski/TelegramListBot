@@ -1,6 +1,9 @@
-from BotFramework import TelegramBotAPI, Chat, Txtlogger
+from BotFramework import TelegramBotAPI, Chat, TxtLogger
 import time
 import inspect
+
+# TODO on delete function - think what argument should it take, 
+# TODO add getters and setters to specify it by user and default function
 
 
 class Bot:
@@ -18,9 +21,9 @@ class Bot:
 
     """
 
-    def __default_callback(self, chat, __args):
+    def __default_callback(self, chat, update):
         self.__bot_api.send_message(text="Error: callback function not recognized!", chat_id=chat.chat_id)
-        self.__create_log("Error: callback function not recognized:\n" + str(__args))
+        self.__create_log("Error: callback function not recognized:\n" + str(update))
 
     def __default_command(self, chat, _):
         self.__bot_api.send_message(text="Command not recognised. Use /help for further assistance.",
@@ -29,18 +32,12 @@ class Bot:
     def __default_message_response(self, chat, _):
         self.__bot_api.send_message(text="Use /help to see list of possible commands.", chat_id=chat.chat_id)
 
-    def __init__(self, telegram_api_token: str, chat_life_time: int = 600, logger: Txtlogger.Txtlogger = None):
+    def __init__(self, telegram_api_token: str, chat_on_delete_function, chat_life_time: int = 600, logger: TxtLogger.TxtLogger = None):
+        assert isinstance(telegram_api_token, str)
+        assert chat_life_time is None or (isinstance(chat_life_time, int) and chat_life_time > 0)
+        assert logger is None or isinstance(logger, TxtLogger.TxtLogger)
 
-        if logger is not None:
-            fn_cnt = 0
-            for i in inspect.getmembers(logger):
-                if i[0] == 'enter_log' or i[0] == 'clear_log':
-                    fn_cnt = fn_cnt + 1
-                    if fn_cnt == 2:
-                        break
-            if fn_cnt < 2:
-                raise Exception('Logger class do not provide enter_log or clear_log functions.')
-
+        self.__chat_on_delete_function = chat_on_delete_function
         self.__logger = logger
         self.__bot_api = TelegramBotAPI.TelegramBotAPI(telegram_api_token)
         self.__message_handler = {}
@@ -57,18 +54,25 @@ class Bot:
         if self.__logger is not None:
             self.__logger.enter_log(log_entry)
 
-    def remove_callback_function(self, name: str):
-            del self.__callback_handler[name]
+    def get_chat_life_time(self):
+        return self.__chat_life_time
 
-    def remove_command_function(self, name: str):
-            del self.__command_handler[name]
+    def set_chat_life_time(self, chat_life_time: int):
+        assert chat_life_time is None or (isinstance(chat_life_time, int) and chat_life_time > 0)
+        self.__chat_life_time = chat_life_time
 
-    def remove_message_reaction_function(self, name: str):
-            del self.__message_handler[name]
+    def pop_callback_function(self, name: str):
+        return self.__callback_handler.pop(name)
+
+    def pop_command_function(self, name: str):
+        return self.__command_handler.pop(name)
+
+    def pop_message_reaction_function(self, name: str):
+        return self.__message_handler.pop(name)
 
     def add_callback_function(self, name: str, func):
         assert isinstance(func, func)
-        assert inspect.signature(func) == '(chat, args)'
+        assert inspect.signature(func) == '(chat, update)'
         assert isinstance(name, str)
         if name not in self.__callback_handler:
             self.__callback_handler[name] = func
@@ -115,7 +119,7 @@ class Bot:
         return self.__bot_api.get_updates(offset, timeout)
 
     def get_bot_details(self):
-        return self.__bot_api.get_bot_details()
+        return self.__bot_api.get_me()
 
     def start(self):
 
@@ -143,9 +147,8 @@ class Bot:
 
                 # creating chat instance if necessary
                 if chat_id not in self.__chat_dict:
-                    chat = Chat.Chat(chat_id, self.__bot_api)
+                    chat = Chat.Chat(chat_id, self.__bot_api, self.__chat_on_delete_function)
                     self.__chat_dict[chat_id] = chat
-                    self.__chat_dict[chat_id].state = 0
                 else:
                     chat = self.__chat_dict[chat_id]
                     chat.last_usage_time = time.time()
@@ -176,5 +179,12 @@ class Bot:
                 # end of handling updates
 
             # TODO handling scheduled tasks
+
+            # delete unused chats from dictionary
+            if self.__chat_life_time is not None:
+                for chat_id in self.__chat_dict:
+                    if time.time() - self.__chat_dict[chat_id].last_usage_time > self.__chat_life_time:
+                        self.__chat_dict[chat_id].on_delete_function(self.__chat_dict[chat_id])
+                        del self.__chat_dict[chat_id]
 
             time.sleep(0.5)
