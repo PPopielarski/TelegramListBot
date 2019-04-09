@@ -3,7 +3,9 @@ import time
 import inspect
 
 # TODO on delete function - think what argument should it take, 
-# TODO add getters and setters to specify it by user and default function
+# TODO and for what types of chats should they be applied
+# TODO Consider replace setting configurations by functions by generating chat prototypes and inserting them into
+# TODO bot while it's created
 
 
 class Bot:

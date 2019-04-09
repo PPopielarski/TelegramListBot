@@ -7,7 +7,7 @@ bot = TelegramBotAPI.TelegramBotAPI(bot_token)
 ik = ReplyMarkups.InlineKeyboardMarkup()
 ik.add_button(Buttons.InlineKeyboardButton('przycisk', callback_data='cbd'), row=1, col=1)
 
-bot.send_message(chat_id=139257826, text='text_przycisk', reply_markup=ik)
+bot.send_message(chat_id=-1001307448947, text='To jest przykładowa klawiatura bota.', reply_markup=ik)
 
 time.sleep(4)
 

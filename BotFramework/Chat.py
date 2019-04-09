@@ -1,5 +1,5 @@
 import time
-from BotFramework import TelegramBotAPI, Bot, Chat
+from BotFramework import TelegramBotAPI, Bot
 
 
 class Chat:
@@ -19,7 +19,7 @@ class Chat:
         self.last_usage_time = time.time()
         self.on_delete_function = on_delete_function
 
-    def call_on_delete_function(self, chat: Chat.Chat, bot: Bot.Bot, bot_api: TelegramBotAPI.TelegramBotAPI):
+    def call_on_delete_function(self, chat, bot, bot_api):
         if self.on_delete_function is not None:
             self.on_delete_function(chat, bot, bot_api)
 
