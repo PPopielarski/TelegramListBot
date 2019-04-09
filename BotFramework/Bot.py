@@ -32,7 +32,8 @@ class Bot:
     def __default_message_response(self, chat, _):
         self.__bot_api.send_message(text="Use /help to see list of possible commands.", chat_id=chat.chat_id)
 
-    def __init__(self, telegram_api_token: str, chat_on_delete_function, chat_life_time: int = 600, logger: TxtLogger.TxtLogger = None):
+    def __init__(self, telegram_api_token: str, chat_on_delete_function, chat_life_time: int = 600,
+                 logger: TxtLogger.TxtLogger = None):
         assert isinstance(telegram_api_token, str)
         assert chat_life_time is None or (isinstance(chat_life_time, int) and chat_life_time > 0)
         assert logger is None or isinstance(logger, TxtLogger.TxtLogger)
@@ -54,6 +55,10 @@ class Bot:
         if self.__logger is not None:
             self.__logger.enter_log(log_entry)
 
+    def set_chat_on_delete_function(self, func):
+        assert hasattr(func, '__call__'), "Argument func must be a function with argument (chat, bot, bot_api)."
+        self.__chat_on_delete_function = func
+
     def get_chat_life_time(self):
         return self.__chat_life_time
 
@@ -71,8 +76,8 @@ class Bot:
         return self.__message_handler.pop(name)
 
     def add_callback_function(self, name: str, func):
-        assert isinstance(func, func)
-        assert inspect.signature(func) == '(chat, update)'
+        assert hasattr(func, '__call__'), "Argument func must be function with argument (update)."
+        assert inspect.signature(func) == '(update)'
         assert isinstance(name, str)
         if name not in self.__callback_handler:
             self.__callback_handler[name] = func
@@ -81,8 +86,8 @@ class Bot:
             raise Exception('Name already in use!')
 
     def add_command_function(self, name: str, func):
-        assert isinstance(func, func)
-        assert inspect.signature(func) == '(chat, args)'
+        assert hasattr(func, '__call__'), "Argument func must be function with argument (update)."
+        assert inspect.signature(func) == '(update)'
         assert isinstance(name, str)
         if name not in self.__callback_handler:
             self.__command_handler[name] = func
@@ -91,8 +96,8 @@ class Bot:
             raise Exception('Name already in use!')
 
     def add_message_reaction_function(self, name: str, func):
-        assert hasattr(func, '__call__'), "Argument func must be function with arguments (chat, args)."
-        assert inspect.signature(func) == '(chat, args)'
+        assert hasattr(func, '__call__'), "Argument func must be function with argument (update)."
+        assert inspect.signature(func) == '(update)'
         assert isinstance(name, str)
         if name not in self.__callback_handler:
             self.__message_handler[name] = func
@@ -113,7 +118,8 @@ class Bot:
         self.__default_message_reaction = func
 
     def clear_logs(self):
-        self.__logger.clear_log()
+        if self.__logger is not None:
+            self.__logger.clear_logs()
 
     def get_updates(self, offset: int, timeout: int = 100):
         return self.__bot_api.get_updates(offset, timeout)
@@ -184,7 +190,7 @@ class Bot:
             if self.__chat_life_time is not None:
                 for chat_id in self.__chat_dict:
                     if time.time() - self.__chat_dict[chat_id].last_usage_time > self.__chat_life_time:
-                        self.__chat_dict[chat_id].on_delete_function(self.__chat_dict[chat_id])
+                        self.__chat_dict[chat_id].call_on_delete_function()
                         del self.__chat_dict[chat_id]
 
             time.sleep(0.5)

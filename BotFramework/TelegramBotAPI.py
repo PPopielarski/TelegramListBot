@@ -46,7 +46,7 @@ class TelegramBotAPI:
     def send_chat_action(self, chat_id, action: str) -> dict:
         assert isinstance(chat_id, int) or (isinstance(chat_id, str) and chat_id[0] == '@'), \
                           'Chat_id must be chat_id or username starting with @'
-        assert action in ('typing', 'upload_photo' , 'record_video', 'upload_video', 'record_audio', 'upload_audio',
+        assert action in ('typing', 'upload_photo', 'record_video', 'upload_video', 'record_audio', 'upload_audio',
                           'upload_document', 'find_location', 'record_video_note', 'upload_video_note')
         return self.__send_post_request({"method": "sendChatAction", "action": action, "chat_id": chat_id})
 
@@ -54,7 +54,7 @@ class TelegramBotAPI:
         assert isinstance(chat_id, int) or (isinstance(chat_id, str) and chat_id[0] == '@'), \
                           'Chat_id must be chat_id or username starting with @'
         assert isinstance(from_chat_id, int) or (isinstance(from_chat_id, str) and chat_id[0] == '@'), \
-               'Chat_id must be chat_id or username starting with @'
+            'Chat_id must be chat_id or username starting with @'
         assert isinstance(message_id, int)
         assert isinstance(disable_notification, bool)
         request = {"method": "forwardMessage", "from_chat_id": from_chat_id, "chat_id": chat_id,
@@ -524,17 +524,17 @@ class TelegramBotAPI:
         return self.__send_post_request({"method": "setChatPhoto", 'chat_id': chat_id, 'photo': photo})
 
     def set_chat_title(self, chat_id, title: str):
-        assert isinstance(title, str) and  0 < len(title) <= 255, \
+        assert isinstance(title, str) and 0 < len(title) <= 255, \
             'Chat title must be a string, between 1 and 255 chars length.'
         assert isinstance(chat_id, int) or (isinstance(chat_id, str) and chat_id[0] == '@'), \
-                                            'Chat_id must be chat_id or username starting with @'
+            'Chat_id must be chat_id or username starting with @'
         return self.__send_post_request({"method": "setChatTitle", 'chat_id': chat_id, 'title': title})
 
     def set_chat_description(self, chat_id, description: str):
         assert isinstance(description, str) and 0 < len(description) <= 255, \
             'Chat description must be a string between 1 and 255 chars length.'
         assert isinstance(chat_id, int) or (isinstance(chat_id, str) and chat_id[0] == '@'), \
-               'Chat_id must be chat_id or username starting with @'
+            'Chat_id must be chat_id or username starting with @'
         return self.__send_post_request({"method": "setChatDescription", 'chat_id': chat_id,
                                          'description': description})
 
