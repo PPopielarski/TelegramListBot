@@ -1,16 +1,19 @@
 import json
 import requests
 from BotFramework import ReplyMarkups
+import time
 
 
 #  TODO handle chat_id - it can be int or string
-
+#  TODO handle limiting requests to 30 per second
 
 class TelegramBotAPI:
 
-    __slots__ = '__url'
+    __slots__ = '__url', '__count', '__last_timer_reset_time'
 
     def __init__(self, token):
+        self.__last_timer_reset_time = 0
+        self.__count = 0
         self.__url = 'https://api.telegram.org/bot' + token + '/'
 
     def __send_post_request(self, parameters_dict):

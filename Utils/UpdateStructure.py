@@ -47,7 +47,7 @@ class Message:
         self.chat = Chat(message.get('chat', None))
         self.date = message.get('date', None)
         self.text = message.get('text', None)
-        self.entities = [message.get['entities']]
+        self.entities = [message.get('entities', None)]
         self.forward_from_message_id = message.get('forward_from_message_id', None)
         self.forward_date = message.get('forward_date', None)
         self.media_group_id = message.get('media_group_id', None)
@@ -55,7 +55,7 @@ class Message:
 
 class Update:
 
-    __slots__ = 'self.update'
+    __slots__ = 'update'
 
     def __init__(self, update: dict):
         self.update = update
